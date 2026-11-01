@@ -1,0 +1,189 @@
+{
+  "passed": [
+    "public repo tracks only static sites and generic publishing paths",
+    "updating second site retains first site byte-for-byte",
+    "first release manifest unchanged",
+    "single-site update touches no unrelated file",
+    "unrelated registry metadata remains unchanged",
+    "registry retains both entries with canonical paths",
+    "updated release retains previous release id",
+    "hash-corrupt manifest rejected without output",
+    "duplicate-key manifest rejected without output",
+    "escaping manifest path rejected without output",
+    "unlisted file rejected without output",
+    "actual site bytes drifting from manifest rejected",
+    "rejected private artifact leaves complete repo unchanged",
+    "rejected symlink import leaves complete repo unchanged",
+    "whole-site assembly preserves first site original bytes",
+    "whole-site assembly publishes updated second site",
+    "whole-site assembly retains root portal and registry",
+    "assembled temporary release excludes sources and history",
+    "delivered release excludes tools, sources and histories",
+    "delivered files contain only public static formats",
+    "delivered files contain no known credentials or environment files",
+    "published JSON contains no private store history or writer receipts",
+    "delivered registry declares Since canonical child path",
+    "Since exactly reuses previously approved static bytes and display tags",
+    "Since ships exactly two explicit demo projections",
+    "Since summaries contain only the same two demos",
+    "Since original markdown hashes match public projections"
+  ],
+  "artifact_files": [
+    {
+      "path": ".nojekyll",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "app.js",
+      "bytes": 2138,
+      "sha256": "f85773e9512e3c88aa1d88d1d4619329353ad35711229e769a8439b17f7dc7a9"
+    },
+    {
+      "path": "index.html",
+      "bytes": 635,
+      "sha256": "457fa071bb7bbb474571ea43f1cc765934f411a169721e96861e1128e2cb253b"
+    },
+    {
+      "path": "since/.nojekyll",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "since/app.js",
+      "bytes": 32667,
+      "sha256": "db0c58f9929e06da7e60565e17495c77f9260b8daa5bd71b8bc911a02fab22d5"
+    },
+    {
+      "path": "since/assets/NotoSansSC-OFL.txt",
+      "bytes": 4387,
+      "sha256": "babcfe66c8a098b2fa279bc724a3a342f8124f77ce18941fbcc1bbb39823cded"
+    },
+    {
+      "path": "since/assets/NotoSansSC.woff2",
+      "bytes": 7782036,
+      "sha256": "54964039da694afce3cb87575fa65e8dfb259c68b798b045a5cfb290a49b5663"
+    },
+    {
+      "path": "since/assets/img.svg",
+      "bytes": 262,
+      "sha256": "8a704b331169ba0554f85b1dcef1c48962b497346bacdb39dcaa4646688d0599"
+    },
+    {
+      "path": "since/assets/img1.svg",
+      "bytes": 262,
+      "sha256": "f066832f7d67ba42d87ce6eda1ee5f9d8df88aec8933b77a5c83a2a45f9d905f"
+    },
+    {
+      "path": "since/assets/img3.svg",
+      "bytes": 506,
+      "sha256": "e72370f55120188c65965213543754cc4a728990041371c58592e8a2df6a7eca"
+    },
+    {
+      "path": "since/assets/img4.svg",
+      "bytes": 500,
+      "sha256": "cba0384f44a3b46d01e12b9e23850da500dc1f35748fcbebd3a9a992538ffc14"
+    },
+    {
+      "path": "since/assets/imgArrow.svg",
+      "bytes": 405,
+      "sha256": "b2937a29ca6b7622254e86e039b89583906e78ac341a6098e5769b4de1c8a7cf"
+    },
+    {
+      "path": "since/assets/imgArrow1.svg",
+      "bytes": 409,
+      "sha256": "1c4549dbcf9401fd518de7acf87a2a293a507637647b236e6406e4aa5c4ab749"
+    },
+    {
+      "path": "since/assets/imgBack.svg",
+      "bytes": 404,
+      "sha256": "7fda50c4d0b85b2c5f411f5d08d564d9c9044790052a512da53a5fd5ce5545f1"
+    },
+    {
+      "path": "since/assets/imgBook.svg",
+      "bytes": 785,
+      "sha256": "875bc2b4ff8d9158006162ec5ea882f03e2033055ec8be6d1062582fcffc06d8"
+    },
+    {
+      "path": "since/assets/imgBook1.svg",
+      "bytes": 764,
+      "sha256": "badc8572a6bd17d969a00cecb8b04adb84c2e33bae5f3371fe11e136857970ae"
+    },
+    {
+      "path": "since/assets/imgBook2.svg",
+      "bytes": 745,
+      "sha256": "dd6e6212e412534f77bcdd388f37fd25efaca2d3bb49cb0ae9a3eb9b5053f28d"
+    },
+    {
+      "path": "since/assets/imgExternal.svg",
+      "bytes": 379,
+      "sha256": "e6d307dcda524cfd655506c8af906f8561e0aa6a2324392e0a9b5e0e03a35ed9"
+    },
+    {
+      "path": "since/assets/imgGraph.svg",
+      "bytes": 1409,
+      "sha256": "3d0e1689c24eab179fbd5af8d35a51a8c30b67fe4b2b1fddcd3c3584815418a3"
+    },
+    {
+      "path": "since/assets/imgGraph1.svg",
+      "bytes": 1538,
+      "sha256": "7597419a57a73d37eb9991ba8649f26527805adf9fd80f07810eaba7333dacac"
+    },
+    {
+      "path": "since/assets/imgSearch.svg",
+      "bytes": 660,
+      "sha256": "98350d4e2a7ce83ae0a757ce5ff64ac1bb8c8d286bedc791bc6fc9d13453e4f1"
+    },
+    {
+      "path": "since/assets/imgSpark.svg",
+      "bytes": 430,
+      "sha256": "5a336dd8008dbba652159813435b3b7dba849c5168d53f51e0cd1e3d95fc0e02"
+    },
+    {
+      "path": "since/assets/imgTime.svg",
+      "bytes": 1343,
+      "sha256": "a8fbca7597af5a5511d2af416806a07c11bfe8deadeaa0af0cafa6c6ccde2690"
+    },
+    {
+      "path": "since/data/catalog.json",
+      "bytes": 29828,
+      "sha256": "2f90fad77995d61a59ffeb69ec3603121f4cbc3ceb0b71102376a6df2128763d"
+    },
+    {
+      "path": "since/data/themes.json",
+      "bytes": 2809,
+      "sha256": "377c4e1a0560a0944c6a3e7f92cb88d40e5581e809e4086d53440833cfb8ce64"
+    },
+    {
+      "path": "since/data/themes/example-agent-work.json",
+      "bytes": 7949,
+      "sha256": "dbe3f3e98ece91dc92877bb0b010e7ff616263879e4b2f0f6bf8119ba884301a"
+    },
+    {
+      "path": "since/data/themes/example-information-feed.json",
+      "bytes": 10752,
+      "sha256": "fc8c78285a3a281ddfb0a66a1cb514b9aae403da4db14f29adcc737541607b24"
+    },
+    {
+      "path": "since/index.html",
+      "bytes": 694,
+      "sha256": "6f531aa747735e47d7859d185cf3b8f8c3786626c69e2b9dba8a44fdb64b3cde"
+    },
+    {
+      "path": "since/styles.css",
+      "bytes": 17435,
+      "sha256": "98b2130b728e14a5cdb9c983f3ad1c37b9d9354307314f7d2b5bd03932a0098f"
+    },
+    {
+      "path": "sites.json",
+      "bytes": 170,
+      "sha256": "8680730bbf81f1b1ff01c515ea1828c624b124b639b5e4cb606a89cf65467b7e"
+    },
+    {
+      "path": "styles.css",
+      "bytes": 1797,
+      "sha256": "e3d5de48d2f27df368cebc0cf05caf7271119afd7588b7274d1afe337c016a76"
+    }
+  ],
+  "qa_commit": "ad92cac42ce4c575517e677c10688bb92895b624"
+}
