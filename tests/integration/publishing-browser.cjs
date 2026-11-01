@@ -36,7 +36,7 @@ const {chromium}=require(playwrightPath);
   check('desktop Since fits viewport',await noOverflow());
   await page.screenshot({path:out+'/'+mode+'-since-desktop.png',fullPage:true});
   for(const [id,view] of Object.entries(views)){
-   await page.goto(base+'since/#theme='+id);await page.locator('.timeline-row').first().waitFor();
+   await page.goto(base+'since/#theme='+id);await page.locator('.timeline-row').first().waitFor();await page.waitForLoadState('networkidle');
    await page.reload();await page.locator('.timeline-row').first().waitFor();
    check(id+' direct hash refresh correct',(await page.locator('.detail-heading h1').innerText())===view.theme.title);
    check(id+' all saved nodes present',await page.locator('.timeline-row').count()===view.nodes.length);
