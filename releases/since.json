@@ -1,9 +1,9 @@
 {
   "version": 1,
   "site_id": "since",
-  "release_id": "8a87625e41148a8d8a3aa3a7d036f02f3c1a97c56357f70096dbc8d8fb14eafb",
-  "previous_release_id": null,
-  "created_at": "2026-11-01T08:51:53.687791+00:00",
+  "release_id": "eac44fce547b61cd87cba800d7e91e7de20550cb9a89a0dc690b6e2123e44a3f",
+  "previous_release_id": "8a87625e41148a8d8a3aa3a7d036f02f3c1a97c56357f70096dbc8d8fb14eafb",
+  "created_at": "2026-11-01T12:08:40.542910+00:00",
   "files": [
     {
       "path": ".nojekyll",
@@ -12,8 +12,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "db0c58f9929e06da7e60565e17495c77f9260b8daa5bd71b8bc911a02fab22d5",
-      "size": 32667
+      "sha256": "4fe1344ae89eecdde2c2e36ea3f996573fdc4f7ea585231399ec02f5a461c048",
+      "size": 41784
     },
     {
       "path": "assets/NotoSansSC-OFL.txt",
@@ -87,8 +87,8 @@
     },
     {
       "path": "assets/imgGraph1.svg",
-      "sha256": "7597419a57a73d37eb9991ba8649f26527805adf9fd80f07810eaba7333dacac",
-      "size": 1538
+      "sha256": "d1fb701fb8958b47986da587605949a3df33d28e39940e1d3df30344b959270c",
+      "size": 1534
     },
     {
       "path": "assets/imgSearch.svg",
@@ -104,6 +104,11 @@
       "path": "assets/imgTime.svg",
       "sha256": "a8fbca7597af5a5511d2af416806a07c11bfe8deadeaa0af0cafa6c6ccde2690",
       "size": 1343
+    },
+    {
+      "path": "data/articles.json",
+      "sha256": "263cee1eef2d6c2e6a26cbd78786e5710db8033ea6c6803086b92699670ca93f",
+      "size": 4656
     },
     {
       "path": "data/catalog.json",
@@ -132,8 +137,8 @@
     },
     {
       "path": "styles.css",
-      "sha256": "98b2130b728e14a5cdb9c983f3ad1c37b9d9354307314f7d2b5bd03932a0098f",
-      "size": 17435
+      "sha256": "5adc81e81408b56ca51d907fb41b1e6565866a00abb0c3a4880f1a198c19cfec",
+      "size": 24996
     }
   ]
 }
