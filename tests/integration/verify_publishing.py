@@ -47,6 +47,10 @@ def main():
             assert result.returncode != 0, 'invalid input accepted: '+tool
         return result
 
+    tracked = subprocess.check_output(['git', 'ls-files', '-z'], cwd=source).decode().split('\0')
+    public_roots = {'.github', '.gitignore', '.nojekyll', 'AGENTS.md', 'README.md', 'LICENSE', 'sites.json', 'sites', 'releases', 'portal', 'tools', 'tests', 'docs'}
+    check('public repo tracks only static sites and generic publishing paths', all(Path(p).parts[0] in public_roots and not ({'archive', 'apps', 'packages', '.env', 'node_modules'} & set(Path(p).parts)) for p in tracked if p))
+
     with tempfile.TemporaryDirectory(prefix='web-publish-qa-') as directory:
         temporary = Path(directory); repo = temporary/'repo'; repo.mkdir()
         for folder in ['tools', 'portal']:
