@@ -2,3 +2,5 @@ __pycache__/
 *.py[cod]
 _site/
 .DS_Store
+.publisher.lock
+.site-import-*/

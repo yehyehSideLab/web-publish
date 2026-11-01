@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "site_id": "since",
+  "release_id": "8a87625e41148a8d8a3aa3a7d036f02f3c1a97c56357f70096dbc8d8fb14eafb",
+  "previous_release_id": null,
+  "created_at": "2026-11-01T08:51:53.687791+00:00",
+  "files": [
+    {
+      "path": ".nojekyll",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    {
+      "path": "app.js",
+      "sha256": "db0c58f9929e06da7e60565e17495c77f9260b8daa5bd71b8bc911a02fab22d5",
+      "size": 32667
+    },
+    {
+      "path": "assets/NotoSansSC-OFL.txt",
+      "sha256": "babcfe66c8a098b2fa279bc724a3a342f8124f77ce18941fbcc1bbb39823cded",
+      "size": 4387
+    },
+    {
+      "path": "assets/NotoSansSC.woff2",
+      "sha256": "54964039da694afce3cb87575fa65e8dfb259c68b798b045a5cfb290a49b5663",
+      "size": 7782036
+    },
+    {
+      "path": "assets/img.svg",
+      "sha256": "8a704b331169ba0554f85b1dcef1c48962b497346bacdb39dcaa4646688d0599",
+      "size": 262
+    },
+    {
+      "path": "assets/img1.svg",
+      "sha256": "f066832f7d67ba42d87ce6eda1ee5f9d8df88aec8933b77a5c83a2a45f9d905f",
+      "size": 262
+    },
+    {
+      "path": "assets/img3.svg",
+      "sha256": "e72370f55120188c65965213543754cc4a728990041371c58592e8a2df6a7eca",
+      "size": 506
+    },
+    {
+      "path": "assets/img4.svg",
+      "sha256": "cba0384f44a3b46d01e12b9e23850da500dc1f35748fcbebd3a9a992538ffc14",
+      "size": 500
+    },
+    {
+      "path": "assets/imgArrow.svg",
+      "sha256": "b2937a29ca6b7622254e86e039b89583906e78ac341a6098e5769b4de1c8a7cf",
+      "size": 405
+    },
+    {
+      "path": "assets/imgArrow1.svg",
+      "sha256": "1c4549dbcf9401fd518de7acf87a2a293a507637647b236e6406e4aa5c4ab749",
+      "size": 409
+    },
+    {
+      "path": "assets/imgBack.svg",
+      "sha256": "7fda50c4d0b85b2c5f411f5d08d564d9c9044790052a512da53a5fd5ce5545f1",
+      "size": 404
+    },
+    {
+      "path": "assets/imgBook.svg",
+      "sha256": "875bc2b4ff8d9158006162ec5ea882f03e2033055ec8be6d1062582fcffc06d8",
+      "size": 785
+    },
+    {
+      "path": "assets/imgBook1.svg",
+      "sha256": "badc8572a6bd17d969a00cecb8b04adb84c2e33bae5f3371fe11e136857970ae",
+      "size": 764
+    },
+    {
+      "path": "assets/imgBook2.svg",
+      "sha256": "dd6e6212e412534f77bcdd388f37fd25efaca2d3bb49cb0ae9a3eb9b5053f28d",
+      "size": 745
+    },
+    {
+      "path": "assets/imgExternal.svg",
+      "sha256": "e6d307dcda524cfd655506c8af906f8561e0aa6a2324392e0a9b5e0e03a35ed9",
+      "size": 379
+    },
+    {
+      "path": "assets/imgGraph.svg",
+      "sha256": "3d0e1689c24eab179fbd5af8d35a51a8c30b67fe4b2b1fddcd3c3584815418a3",
+      "size": 1409
+    },
+    {
+      "path": "assets/imgGraph1.svg",
+      "sha256": "7597419a57a73d37eb9991ba8649f26527805adf9fd80f07810eaba7333dacac",
+      "size": 1538
+    },
+    {
+      "path": "assets/imgSearch.svg",
+      "sha256": "98350d4e2a7ce83ae0a757ce5ff64ac1bb8c8d286bedc791bc6fc9d13453e4f1",
+      "size": 660
+    },
+    {
+      "path": "assets/imgSpark.svg",
+      "sha256": "5a336dd8008dbba652159813435b3b7dba849c5168d53f51e0cd1e3d95fc0e02",
+      "size": 430
+    },
+    {
+      "path": "assets/imgTime.svg",
+      "sha256": "a8fbca7597af5a5511d2af416806a07c11bfe8deadeaa0af0cafa6c6ccde2690",
+      "size": 1343
+    },
+    {
+      "path": "data/catalog.json",
+      "sha256": "2f90fad77995d61a59ffeb69ec3603121f4cbc3ceb0b71102376a6df2128763d",
+      "size": 29828
+    },
+    {
+      "path": "data/themes.json",
+      "sha256": "377c4e1a0560a0944c6a3e7f92cb88d40e5581e809e4086d53440833cfb8ce64",
+      "size": 2809
+    },
+    {
+      "path": "data/themes/example-agent-work.json",
+      "sha256": "dbe3f3e98ece91dc92877bb0b010e7ff616263879e4b2f0f6bf8119ba884301a",
+      "size": 7949
+    },
+    {
+      "path": "data/themes/example-information-feed.json",
+      "sha256": "fc8c78285a3a281ddfb0a66a1cb514b9aae403da4db14f29adcc737541607b24",
+      "size": 10752
+    },
+    {
+      "path": "index.html",
+      "sha256": "6f531aa747735e47d7859d185cf3b8f8c3786626c69e2b9dba8a44fdb64b3cde",
+      "size": 694
+    },
+    {
+      "path": "styles.css",
+      "sha256": "98b2130b728e14a5cdb9c983f3ad1c37b9d9354307314f7d2b5bd03932a0098f",
+      "size": 17435
+    }
+  ]
+}
