@@ -1,6 +1,6 @@
 # 统一发布仓库验收（2026-11-01）
 
-离线结论：**通过，当前范围无阻断问题**。27 项集成断言 + 52 项浏览器断言，共 79 项全部通过。31 个发布文件，106 次浏览器请求全部 HTTP 200，零 API/外网/凭据请求、网络失败或脚本错误。真实 Pages 线上复验待发布完成后另行记录，不能以本报告的本地结果宣称已经上线。
+离线结论：**通过，当前范围无阻断问题**。27 项集成断言 + 52 项浏览器断言，共 79 项全部通过。31 个发布文件，106 次浏览器请求全部 HTTP 200，零 API/外网/凭据请求、网络失败或脚本错误。真实 Pages 已在发布后独立复验通过：52 项线上浏览器断言、112 次请求全 200；另以普通 HTTP 核对 29 个运行资源，全部与批准产物 SHA-256 一致。详见下方线上记录。
 
 ## 验收版本与范围
 
@@ -34,3 +34,24 @@
 | 小屏原稿/来源 | [截图](evidence/publishing-offline/local-since-detail-mobile.png) |
 
 命令与工具边界见 [计划](publishing-plan.md)。当前没有超出本轮范围的实现承诺：浏览器为静态只读，标签仍是筛选；跨仓库导入由已认证调用方完成，不是浏览器自动同步。小屏脉络局部横滚提示仍较弱，但已验证可操作。
+
+## 真实 Pages 上线复验
+
+**线上通过，无阻断问题。** 2026-11-01 08:56 UTC（北京时间 16:56）完成独立检查：
+
+- 根入口：[web-publish](https://yehyehsidelab.github.io/web-publish/)。实际首次访问 HTTP 200，根卡片可进入 Since。
+- 首站：[Since](https://yehyehsidelab.github.io/web-publish/since/)。两条 `#theme=` 直接打开和刷新均正常；逐节点来源和完整原稿六条来源卡正确，展示标签与批准目录一致。
+- 同一套浏览器脚本 **52 项线上断言全部通过**，**112 次请求/响应全部 HTTP 200**。字体、图标、390 宽入口/卡片/标签/分支/原稿引用正常；零 API、私仓/外网或凭据请求，零网络失败与脚本错误。
+- 另以无凭据普通 HTTP GET 逐一读取 **29 个运行资源**，包括 HTML、CSS、JS、JSON、全部字体和图标；均 200 且 SHA-256 与离线批准产物一致。2 个 `.nojekyll` 为托管控制标记，仅纳入离线清单，不作为浏览器运行资源请求。
+- 本次发布主线 `bdd19d8a0511c4c6a7442e9c95377fd92551edb7`，主控提供的 [GitHub 部署记录](https://github.com/yehyehSideLab/web-publish/actions/runs/41290800930)。QA 已 fetch 并快进同步该 main；线上资源独立核验确认内容一致，不仅依据 CI 状态。
+
+| 线上证据 | 文件 |
+| --- | --- |
+| 52 项断言与 112 次真实请求/响应 | [online-browser-results.json](evidence/publishing-online/online-browser-results.json) |
+| 29 个实际 HTTP 资源及 SHA-256 | [online-http-hashes.json](evidence/publishing-online/online-http-hashes.json) |
+| 真实根入口 | [桌面](evidence/publishing-online/online-portal-desktop.png) · [390](evidence/publishing-online/online-portal-mobile.png) |
+| 真实 Since 关注 | [桌面](evidence/publishing-online/online-since-desktop.png) · [390](evidence/publishing-online/online-since-mobile.png) |
+| 真实两主题与来源 | [智能体](evidence/publishing-online/online-example-agent-work.png) · [信息流](evidence/publishing-online/online-example-information-feed.png) |
+| 真实小屏原稿/来源 | [截图](evidence/publishing-online/online-since-detail-mobile.png) |
+
+线上复验阶段仅新增本节和 `docs/qa/` 证据，未修改已通过的测试或实现、未发布站点、未触碰 8765。外部来源和归档超链接仅核对其固定定位，不将私仓访问权限写成已开放。
