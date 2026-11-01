@@ -6,7 +6,7 @@
 
 Since / 判断力：<https://yehyehsidelab.github.io/web-publish/since/>
 
-首次上线以 [Publish Websites 工作流](https://github.com/yehyehSideLab/web-publish/actions/workflows/pages.yml) 的实际部署结果为准。
+已上线并完成真实公网验收。[首次成功部署](https://github.com/yehyehSideLab/web-publish/actions/runs/41290800930)；后续状态见 [Publish Websites 工作流](https://github.com/yehyehSideLab/web-publish/actions/workflows/pages.yml)。
 
 ## 目录
 
