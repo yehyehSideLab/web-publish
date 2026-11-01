@@ -27,6 +27,7 @@ def main():
     parser.add_argument('--playwright-path', default='/tmp/ganzhili-reference-tools/node_modules/playwright')
     parser.add_argument('--chrome', default='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
     parser.add_argument('--public-url', help='Optional real Pages root; only reads this URL')
+    parser.add_argument('--since-reference', help='Optional already-approved static Since artifact; never raw sources')
     args = parser.parse_args()
     source, artifact, output = Path(args.repo_root).resolve(), Path(args.built_artifact).resolve(), Path(args.output).resolve()
     assert artifact.is_dir() and (artifact/'index.html').is_file()
@@ -127,7 +128,9 @@ def main():
             return True
         check('published JSON contains no private store history or writer receipts', all(no_history(json.loads(b)) for p, b in actual_files.items() if p.endswith('.json')))
         check('delivered registry declares Since canonical child path', any(s['id'] == 'since' and s['path'] == 'since/' for s in actual_registry['sites']))
-        views = {json.loads(p.read_text())['theme']['id']: json.loads(p.read_text()) for p in (artifact/'since/data/themes').glob('*.json')}
+        if args.since_reference:
+            check('Since exactly reuses previously approved static bytes and display tags', inventory(artifact/'since') == inventory(Path(args.since_reference).resolve()))
+        views = {json.loads(p.read_text())['theme']['id']: json.loads(p.read_text()) for p in sorted((artifact/'since/data/themes').glob('*.json'))}
         check('Since ships exactly two explicit demo projections', set(views) == {'example-agent-work', 'example-information-feed'} and all(v.get('is_demo') is True for v in views.values()))
         summaries = json.loads((artifact/'since/data/themes.json').read_text())
         check('Since summaries contain only the same two demos', len(summaries) == 2 and {v['theme']['id'] for v in summaries} == set(views) and all(v.get('is_demo') is True for v in summaries))

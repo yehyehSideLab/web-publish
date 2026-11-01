@@ -23,6 +23,7 @@ python3 tests/integration/verify_publishing.py \
 ## 最终产物与浏览器
 
 - 对主控交付的实际整站产物生成路径/字节数/SHA-256 清单，排除 archive、Git、源代码、存储历史、写入回执、凭据及环境文件。
+- 可选 `--since-reference /已获准的Since静态产物` 对整个 Since 目录逐字节比较，确认原有两个示例与展示标签原样复用；不读取原始资料。
 - Since 完整投影和摘要仅含两个明确 `is_demo:true` 示例，原稿哈希匹配；不新增真实私人主题。
 - 用普通 HTTP 将产物挂载 `/web-publish/`，没有后端或 SPA 兜底。检查根 portal 所有登记链接、实际点击进入 `/web-publish/since/`、两条主题 hash 直接打开及刷新。
 - 逐节点切换并比较来源原句和固定归档链接，完整原稿覆盖全部六条来源卡。
