@@ -1,6 +1,6 @@
 # 统一发布仓库独立验收计划
 
-QA 在独立 clone 的 `qa-publishing` 分支工作，仅维护 `tests/integration/` 和 `docs/qa/`。脚本已在最终代码和重新构建产物上正式运行；离线结果见 [2026-11-01 验收报告](publishing-2026-11-01.md)，线上结果待发布后单独存证。
+QA 在独立 clone 的 `qa-publishing` 分支工作，仅维护 `tests/integration/` 和 `docs/qa/`。脚本已在最终代码和重新构建产物上正式运行；离线结果见 [2026-11-01 验收报告](publishing-2026-11-01.md)，真实 Pages 发布后也已独立复验，线上截图和请求/资源哈希另存 `publishing-online/` 证据。
 
 ```bash
 python3 tests/integration/verify_publishing.py \
