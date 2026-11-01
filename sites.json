@@ -1,4 +1,11 @@
 {
   "version": 1,
-  "sites": []
+  "sites": [
+    {
+      "id": "since",
+      "title": "判断力",
+      "description": "主题、脉络与来源",
+      "path": "since/"
+    }
+  ]
 }

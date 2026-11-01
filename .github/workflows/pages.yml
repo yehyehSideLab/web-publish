@@ -1,0 +1,57 @@
+name: Publish Websites
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'portal/**'
+      - 'sites/**'
+      - 'sites.json'
+      - 'releases/**'
+      - 'tools/**'
+      - 'tests/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-websites
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test publishing tools
+        run: python3 -m unittest discover -s tests/unit
+      - name: Assemble registered websites
+        run: python3 tools/build_site.py --repo-root . --output "${{ runner.temp }}/published-websites"
+      - name: Upload complete public site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/published-websites
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Publish websites
+        id: deployment
+        uses: actions/deploy-pages@v4
