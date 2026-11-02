@@ -1,9 +1,9 @@
 {
   "version": 1,
   "site_id": "since",
-  "release_id": "315407faa8bff0571c24c962f84ef5ca0bbfec23318bf7fce3f637909c273174",
-  "previous_release_id": "90dc1215b8a97413490ef86744fdbad3e423f7d7a30a558e4064b717566d63b9",
-  "created_at": "2026-11-02T08:01:07.935281+00:00",
+  "release_id": "81b1a4d255cb1708b53b52493a96dd69406ff7919b38959ba3fdad988a518097",
+  "previous_release_id": "315407faa8bff0571c24c962f84ef5ca0bbfec23318bf7fce3f637909c273174",
+  "created_at": "2026-11-02T09:14:52.006040+00:00",
   "files": [
     {
       "path": ".nojekyll",
@@ -12,8 +12,8 @@
     },
     {
       "path": "app.js",
-      "sha256": "6e18de0c43cecdb14c2b66855ecdc718bc049abdfbd7cb4f26377ede3b87c230",
-      "size": 46625
+      "sha256": "5ca0fc4f3bae22686e92918fb987e4dadf9ed216ef83fe80edf8d31f6f4420b6",
+      "size": 52813
     },
     {
       "path": "assets/NotoSansSC-OFL.txt",
@@ -106,6 +106,556 @@
       "size": 1343
     },
     {
+      "path": "data/article-details/0614edb5102ed9acaa115293.json",
+      "sha256": "0d9f0045b7cbe1f2a72056d2379f783c163399af02a5f7f84a94762ea642625e",
+      "size": 578
+    },
+    {
+      "path": "data/article-details/1751133d014a69f978e133cd.json",
+      "sha256": "6c8074211ef2e564b6b8f8bf6529dcbd0607344112789a504b5ecd9de8091a3d",
+      "size": 581
+    },
+    {
+      "path": "data/article-details/2cce1bd8c4b0ca94576d98e7.json",
+      "sha256": "da525e16d46985256370b9fabbc674720b4064010db9402341864e090d553f18",
+      "size": 520
+    },
+    {
+      "path": "data/article-details/32206f34a4cc9d99c80b157b.json",
+      "sha256": "63612094bc7ad84610cceddb114f0164844f72d817217f3d135327890f0a53e3",
+      "size": 652
+    },
+    {
+      "path": "data/article-details/348a0487210c5774f4807337.json",
+      "sha256": "bbfdc9a481210bc903926f362c863c39fcda95954cd4bc5d756940f85612b50d",
+      "size": 638
+    },
+    {
+      "path": "data/article-details/481bbdb1a506b16c1f3b24df.json",
+      "sha256": "49dd80ad24d89bdfcbf5b8100d37dc0bf430c592ba9f8202e2a287400594fd0d",
+      "size": 620
+    },
+    {
+      "path": "data/article-details/5612026fccba91034a6fe09a.json",
+      "sha256": "a3a460a987f9b0e1d81dde988dcd295e82c96d7eb4a0dc00ed76c5307d399cad",
+      "size": 602
+    },
+    {
+      "path": "data/article-details/9666e7e2b310c7df28a04c91.json",
+      "sha256": "1fbff92585c9919d581253c03fd18853b2f5514e3b19e11508b2a7f2ebf2247e",
+      "size": 648
+    },
+    {
+      "path": "data/article-details/a01f87eb49bdff052c0169ff.json",
+      "sha256": "5392c00c0d63bb55dea22e88243eed3b86ff3e437855689fd94cc49a9cf938a0",
+      "size": 590
+    },
+    {
+      "path": "data/article-details/a69d4ddf9814c29172fec7c5.json",
+      "sha256": "0a5ef9b3c34d8482d9c58f7023ea5e4ef1bead82ad9c0ed80c03a779a71a7cdf",
+      "size": 670
+    },
+    {
+      "path": "data/article-details/dadd8202340586bf179cc7bf.json",
+      "sha256": "5b5f70dbac1750a5bf810eb378770e1da1654146f0b147e5b4e8a89afea8abc3",
+      "size": 620
+    },
+    {
+      "path": "data/article-details/fb2a0b91d6b01105bdcfad80.json",
+      "sha256": "a623c96c9b683f74d497b4dd5abb2737c481ccefbe0a6b97d6efa34e6e7e4cf6",
+      "size": 577
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.brain-computer-interfaces.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.consumer-decisions.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.human-computer-interaction.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.learning-education.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.mental-health.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.neurodevelopment.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.neuroimaging.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.organizational-collaboration.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.cognition-behavior.user-research.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.aerospace.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.automotive-mobility.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.chemical-engineering.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.energy.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.mining-resources.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.robotics.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.semiconductors.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.engineering-manufacturing.smart-hardware.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.crypto.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.enterprise-software.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.entrepreneurship.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.financial-markets.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.mergers-acquisitions.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.payments.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.personal-finance.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.retail.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.finance-business.venture-capital.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.3d-generation.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.agents.json",
+      "sha256": "6f346d2979b6dc795ffd095f693008aa217c00aa1e6d06c0df20ad46666a6741",
+      "size": 1388
+    },
+    {
+      "path": "data/article-groups/domain.information-media.ai-safety.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.brand-design.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.computer-vision.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.cybersecurity.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.databases.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.film-production.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.games.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.image-generation.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.information-visualization.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.json",
+      "sha256": "263cee1eef2d6c2e6a26cbd78786e5710db8033ea6c6803086b92699670ca93f",
+      "size": 4656
+    },
+    {
+      "path": "data/article-groups/domain.information-media.knowledge-management.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.language-models.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.model-evaluation.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.music-generation.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.news-publishing.json",
+      "sha256": "f386b3f85e0f66d465ef5f65be64339da0f3b1e1bbc2d5637bd5d782ae6ac28e",
+      "size": 1410
+    },
+    {
+      "path": "data/article-groups/domain.information-media.recommendation-systems.json",
+      "sha256": "14cb118cd09a0af55a27075ae8559320f181b7dae1767a0988aabdb6b089148d",
+      "size": 2959
+    },
+    {
+      "path": "data/article-groups/domain.information-media.scientific-computing.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.search.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.social-media.json",
+      "sha256": "6e18130611b6d896107dfe834be7dcacc4c5052c02196c27d87101a4bc2f76e9",
+      "size": 2370
+    },
+    {
+      "path": "data/article-groups/domain.information-media.software-development.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.video-generation.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.voice-interaction.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.information-media.world-models.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.assisted-reproduction.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.biomanufacturing.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.biopharma.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.crop-breeding.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.medical-devices.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.medical-diagnostics.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.nucleic-acids.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.protein-research.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.life-sciences.regenerative-medicine.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.natural-sciences.fundamental-physics.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.natural-sciences.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.sports.football.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.sports.ice-sports.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/domain.sports.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.history-structure.institutions.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.history-structure.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.history-structure.population.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.history-structure.technology-revolutions.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.macroeconomy.economy-finance.credit.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.macroeconomy.economy-finance.employment.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.macroeconomy.economy-finance.growth.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.macroeconomy.economy-finance.inflation.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.macroeconomy.economy-finance.interest-rates.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.macroeconomy.economy-finance.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.macroeconomy.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.business-model.json",
+      "sha256": "1fbff92585c9919d581253c03fd18853b2f5514e3b19e11508b2a7f2ebf2247e",
+      "size": 648
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.commercialization.json",
+      "sha256": "49dd80ad24d89bdfcbf5b8100d37dc0bf430c592ba9f8202e2a287400594fd0d",
+      "size": 620
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.customers-consumers.choice.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.customers-consumers.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.customers-consumers.payment.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.customers-consumers.usage.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.json",
+      "sha256": "3f9bb6e2945c857526c077b04ebb1c3d76a2cd1dc477e682dfeca9efcc5c7e46",
+      "size": 1426
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.organization.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.product.json",
+      "sha256": "bbfdc9a481210bc903926f362c863c39fcda95954cd4bc5d756940f85612b50d",
+      "size": 638
+    },
+    {
+      "path": "data/article-groups/lens.organization-human-behavior.strategy.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.technology-industry.capability-cost.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.technology-industry.industry-market.competition.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.technology-industry.industry-market.cycle.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.technology-industry.industry-market.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.technology-industry.industry-market.pricing.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.technology-industry.industry-market.supply-demand.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.technology-industry.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
+      "path": "data/article-groups/lens.technology-industry.supply-chain.json",
+      "sha256": "b7ec76256c605cf7650823519452e140c800fe01432e52487393744d471cdae7",
+      "size": 241
+    },
+    {
       "path": "data/articles.json",
       "sha256": "263cee1eef2d6c2e6a26cbd78786e5710db8033ea6c6803086b92699670ca93f",
       "size": 4656
@@ -114,6 +664,11 @@
       "path": "data/catalog.json",
       "sha256": "2f90fad77995d61a59ffeb69ec3603121f4cbc3ceb0b71102376a6df2128763d",
       "size": 29828
+    },
+    {
+      "path": "data/overview.json",
+      "sha256": "6164a98ed35f6af55232ac2961431ef4016f103a803100654ee70fc6279a8e01",
+      "size": 22627
     },
     {
       "path": "data/themes.json",
@@ -132,13 +687,13 @@
     },
     {
       "path": "index.html",
-      "sha256": "6f531aa747735e47d7859d185cf3b8f8c3786626c69e2b9dba8a44fdb64b3cde",
-      "size": 694
+      "sha256": "dddebc876eba3c981be5d45155d1ec72080ef8d8e320094f79e42fc844a7bb88",
+      "size": 598
     },
     {
       "path": "styles.css",
-      "sha256": "721d5d0cc0e581cb8e7c356cb9b6661746771af1b8887a37af2a74497ccf270a",
-      "size": 28551
+      "sha256": "397afbc64ce642608b8ab2b149195b2d4574f1695be79b2f8a1244e790dafa2c",
+      "size": 29372
     }
   ]
 }

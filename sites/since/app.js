@@ -1,7 +1,7 @@
 const app = document.querySelector('#app');
 const dialog = document.querySelector('#tags-dialog');
 const dataMode = document.querySelector('meta[name="since-data-mode"]')?.content || 'api';
-const state = { themes: [], catalog: null, catalogRevision: null, details: new Map(), selectedId: null, selectedNodeId: null, view: 'home', query: '', tagQuery: '', filters: new Set(), loading: false, error: null, refreshError: null, showMarkdown: false, readerTab: 'node', signature: '', controller: null, focusTagId: null, tagIntent: 'filter', searchOpen: false, articleIndex: null, articleError: null, selectedArticleId: null, focusInitialized: false };
+const state = { themes: [], catalog: null, catalogRevision: null, details: new Map(), selectedId: null, selectedNodeId: null, view: 'home', query: '', tagQuery: '', filters: new Set(), loading: false, error: null, refreshError: null, showMarkdown: false, readerTab: 'node', signature: '', controller: null, focusTagId: null, tagIntent: 'filter', searchOpen: false, articleIndex: null, articleError: null, selectedArticleId: null, focusInitialized: false, metadata: new Map(), metadataVersion: 0, fullIndexLoaded: false, listPending: new Set(), listErrors: new Map(), themePending: new Set(), themeErrors: new Map(), fullCatalogRevision: null, lastOverviewCheck: 0 };
 const claimLabels = { fact: '事实', source_statement: '来源说法', inference: '分析推断' };
 const basisLabels = { full_text: '正文', transcript: '转写', partial_text: '已读片段', description: '简介', link_only: '仅链接' };
 const dateLabels = { event: '发生', publication: '发布', discovery: '发现', unknown: '时间待确认' };
@@ -27,51 +27,84 @@ function currentTheme() { return state.details.get(state.selectedId) || null; }
 function tagsById() { return new Map((state.catalog?.tags || []).map(t => [t.id, t])); }
 function selectedTags(view) { return (view?.resolved_tags || []).filter(t => t.eligible_for_graph); }
 function parseRoute() { const id = new URLSearchParams(location.hash.slice(1)).get('theme'); state.view = id ? 'detail' : 'home'; if (id) state.selectedId = id; }
-function navigate(view, id = state.selectedId) { state.view = view; if (id) state.selectedId = id; history.pushState({}, '', view === 'detail' ? `#theme=${encodeURIComponent(id)}` : '#'); state.selectedNodeId = null; state.showMarkdown = false; state.readerTab = 'node'; render(); loadData(); window.scrollTo(0, 0); }
+function navigate(view, id = state.selectedId) { state.view = view; if (id) state.selectedId = id; history.pushState({}, '', view === 'detail' ? `#theme=${encodeURIComponent(id)}` : '#'); state.selectedNodeId = null; state.showMarkdown = false; state.readerTab = 'node'; render(); loadCurrentView(); window.scrollTo(0, 0); }
 function dataPath(resource, id) {
   const themeId = encodeURIComponent(id || '');
-  if (dataMode === 'static') return { themes: './data/themes.json', catalog: './data/catalog.json', theme: `./data/themes/${themeId}.json`, articles: './data/articles.json' }[resource];
-  if (dataMode === 'api') return { themes: '/api/themes', catalog: '/api/catalog', theme: `/api/themes/${themeId}`, articles: '/api/articles' }[resource];
+  if (dataMode === 'static') return { themes: './data/themes.json', catalog: './data/catalog.json', theme: `./data/themes/${themeId}.json`, articles: './data/articles.json', overview: './data/overview.json', group: `./data/article-groups/${themeId}.json`, article: `./data/article-details/${themeId}.json` }[resource];
+  if (dataMode === 'api') return { themes: '/api/themes', catalog: '/api/catalog', theme: `/api/themes/${themeId}`, articles: '/api/articles', overview: '/api/overview', group: `/api/article-groups/${themeId}`, article: `/api/articles/${themeId}` }[resource];
   throw new Error('数据读取模式无效');
 }
-async function request(resource, signal, id) { const response = await fetch(dataPath(resource, id), { cache: 'no-store', credentials: 'same-origin', signal }); let data; try { data = await response.json(); } catch { throw new Error('无法读取服务响应'); } if (!response.ok) throw new Error(data?.error?.message || '读取失败，请重试'); return data; }
+async function request(resource, signal, id) { const response = await fetch(dataPath(resource, id), { cache: 'no-cache', credentials: 'same-origin', signal }); let data; try { data = await response.json(); } catch { throw new Error('无法读取服务响应'); } if (!response.ok) throw new Error(data?.error?.message || '读取失败，请重试'); return data; }
 
-async function loadData({ background = false } = {}) {
-  if (background && state.loading) return;
-  state.controller?.abort();
-  const controller = new AbortController(); state.controller = controller; state.loading = true;
-  try {
-    const [themes, catalogResponse, articlesResult] = await Promise.all([request('themes', controller.signal), request('catalog', controller.signal), request('articles', controller.signal).then(value=>({value}),error=>({error}))]);
-    if (articlesResult.value && (articlesResult.value.schema_version !== '1.0' || !Array.isArray(articlesResult.value.articles) || typeof articlesResult.value.available !== 'boolean')) articlesResult.error = new Error('文章数据格式不完整');
-    if (!Array.isArray(themes) || !Array.isArray(catalogResponse?.catalog?.tags)) throw new Error('主题数据格式不完整');
-    let id = state.selectedId;
-    if (!id && themes.length) id = themes[0].theme.id;
-    if (state.view === 'home' && id && !themes.some(t => t.theme.id === id)) id = themes[0]?.theme.id || null;
-    const summary = themes.find(t => t.theme.id === id);
-    let detail = state.details.get(id);
-    if (id && (!detail || !summary || detail.revision !== summary.revision || detail.catalog_revision !== catalogResponse.catalog_revision)) {
-      detail = await request('theme', controller.signal, id);
-      if (!detail?.theme?.id || !Array.isArray(detail.nodes) || !detail.timeline || typeof detail.analysis_markdown !== 'string') throw new Error('主题脉络数据不完整');
+async function loadData({background=false,force=false}={}){
+  if(state.loading)return;
+  if(background&&!force&&Date.now()-state.lastOverviewCheck<(dataMode==='static'?55000:3000))return;
+  state.loading=true;state.lastOverviewCheck=Date.now();
+  try{
+    const overview=await request('overview');
+    if(overview.schema_version!=='1.0'||!Array.isArray(overview.catalog?.tags)||!Array.isArray(overview.themes)||!Array.isArray(overview.article_index?.articles))throw new Error('总览数据格式不完整');
+    const changed=state.signature!==overview.revision||!!state.error||!!state.refreshError;
+    if(changed){
+      const indexChanged=state.articleIndex?.revision!==overview.article_index.revision;
+      if(indexChanged){state.metadata.clear();state.metadataVersion++;state.fullIndexLoaded=false;state.listErrors.clear();}
+      if(state.fullCatalogRevision!==overview.catalog_revision)state.catalog=overview.catalog;
+      state.catalogRevision=overview.catalog_revision;state.themes=overview.themes;state.articleIndex=overview.article_index;state.articleError=null;
+      for(const[id,view]of state.details){const summary=state.themes.find(t=>t.theme.id===id);if(view.catalog_revision!==state.catalogRevision||(summary&&view.revision!==summary.revision))state.details.delete(id);}
+      state.themeErrors.clear();
+      if(!state.focusInitialized){state.focusTagId=overview.catalog.tags.find(t=>t.id==='domain.information-media.recommendation-systems'&&t.status==='active')?.id||null;state.focusInitialized=true;}
+      if(!state.selectedId&&state.themes.length)state.selectedId=state.themes[0].theme.id;
+      if(state.selectedArticleId&&!articleProjection().byId.has(state.selectedArticleId))state.selectedArticleId=null;
+      reconcileSelection();state.signature=overview.revision;
     }
-    if (controller.signal.aborted) return;
-    const signature = JSON.stringify([themes, catalogResponse.catalog_revision, id, detail?.revision, articlesResult.value?.revision, articlesResult.error?.message]);
-    const changed = signature !== state.signature || !!state.error || !!state.refreshError;
-    state.articleIndex = articlesResult.error ? null : articlesResult.value; state.articleError = articlesResult.error?.message || null;
-    if (!state.focusInitialized) state.focusTagId = catalogResponse.catalog.tags.find(t=>t.id==='domain.information-media.recommendation-systems'&&t.status==='active')?.id || catalogResponse.catalog.tags.find(t=>t.depth===2&&t.status==='active')?.id;
-    state.focusInitialized = true;
-    state.themes = themes; state.catalog = catalogResponse.catalog; state.catalogRevision = catalogResponse.catalog_revision; state.selectedId = id;
-    if (detail) state.details.set(id, detail);
-    if(state.selectedArticleId&&!articleProjection().byId.has(state.selectedArticleId))state.selectedArticleId=null;reconcileSelection();
-    state.signature = signature; state.error = null; state.refreshError = null; state.loading = false;
-    if (changed) render();
-  } catch (error) {
-    if (error.name === 'AbortError') return;
-    state.loading = false;
-    if (state.themes.length && state.catalog) state.refreshError = error.message;
-    else state.error = error.message;
-    render();
-  }
+    state.loading=false;state.error=null;state.refreshError=null;
+    if(changed)render();
+    if(state.view==='detail')loadTheme();else queueListLoad();
+  }catch(error){state.loading=false;if(state.catalog)state.refreshError='总览更新失败';else state.error=error.message;render();}
 }
+const themeRequests=new Map();
+async function loadTheme(retry=false){
+  const id=state.selectedId;if(!id)return;
+  const summary=state.themes.find(t=>t.theme.id===id),cached=state.details.get(id),expectedRevision=summary?.revision,expectedCatalog=state.catalogRevision;
+  if(cached&&(!summary||cached.revision===expectedRevision)&&cached.catalog_revision===expectedCatalog)return;
+  if(themeRequests.has(id)||(!retry&&state.themeErrors.has(id)))return;
+  state.themePending.add(id);state.themeErrors.delete(id);render();
+  const promise=request('theme',undefined,id);themeRequests.set(id,promise);
+  try{const view=await promise;if(view?.theme?.id!==id||!Array.isArray(view.nodes)||typeof view.analysis_markdown!=='string')throw new Error('脉络读取失败');const currentSummary=state.themes.find(t=>t.theme.id===id);if((expectedRevision&&view.revision!==expectedRevision)||view.catalog_revision!==expectedCatalog||state.catalogRevision!==expectedCatalog||currentSummary?.revision!==expectedRevision){const error=new Error('脉络版本已更新，请重试');error.versionMismatch=true;throw error;}state.details.set(id,view);}
+  catch(error){state.themeErrors.set(id,error.message);if(error.versionMismatch)loadData({background:true,force:true});}
+  finally{themeRequests.delete(id);state.themePending.delete(id);if(state.view==='detail'&&state.selectedId===id)render();}
+}
+function loadCurrentView(){if(!state.catalog)loadData();else if(state.view==='detail')loadTheme(true);else queueListLoad();}
+function listTarget(){const full=!!(state.query||state.filters.size||!state.focusTagId);return{full,id:full?null:state.focusTagId,key:(full?'all':'group:'+state.focusTagId)+'@'+state.articleIndex?.revision};}
+function metadataReady(article){return state.metadata.has(article.id);}
+function listStatus(){const target=listTarget(),ids=focusArticles().map(a=>a.id),complete=target.full?state.fullIndexLoaded:ids.every(id=>state.metadata.has(id));return{...target,ids,complete,error:state.listErrors.get(target.key),pending:state.listPending.has(target.key)};}
+function acceptMetadata(payload,revision){
+  if(payload.schema_version!=='1.0'||!Array.isArray(payload.articles)||payload.revision!==revision){const error=new Error('文章版本已更新，请重试');error.versionMismatch=true;throw error;}
+  if(state.articleIndex?.revision!==revision)return false;
+  const valid=new Set(state.articleIndex.articles.map(a=>a.id));
+  for(const row of payload.articles)if(valid.has(row.id)&&typeof row.title==='string'&&typeof row.url==='string')state.metadata.set(row.id,row);
+  state.metadataVersion++;return true;
+}
+async function loadList(retry=false){
+  if(!state.articleIndex?.available)return;
+  const status=listStatus(),revision=state.articleIndex.revision;
+  if(status.complete||status.pending||(!retry&&status.error))return;
+  state.listErrors.delete(status.key);state.listPending.add(status.key);render();
+  try{const payload=await request(status.full?'articles':'group',undefined,status.id);if(acceptMetadata(payload,revision)){const required=status.full?state.articleIndex.articles.map(a=>a.id):status.ids;if(!required.every(id=>state.metadata.has(id)))throw new Error('文章数据不完整');if(status.full)state.fullIndexLoaded=true;reconcileSelection();}}
+  catch(error){if(state.articleIndex?.revision===revision)state.listErrors.set(status.key,error.message);if(error.versionMismatch)loadData({background:true,force:true});}
+  finally{state.listPending.delete(status.key);if(state.view==='home')render();}
+}
+let listFrame=0;
+function queueListLoad(){cancelAnimationFrame(listFrame);if(state.view!=='home'||!state.catalog)return;listFrame=requestAnimationFrame(()=>{listFrame=requestAnimationFrame(()=>{document.querySelector('.graph-wrap')?.setAttribute('data-overview-painted','true');if(!performance.getEntriesByName('since-overview-painted').length)performance.mark('since-overview-painted');loadList();});});}
+async function loadArticle(id,retry=false){
+  if(state.metadata.has(id))return;
+  const revision=state.articleIndex?.revision,key='article:'+id+'@'+revision;
+  if(state.listPending.has(key)||(!retry&&state.listErrors.has(key)))return;
+  state.listErrors.delete(key);state.listPending.add(key);render();
+  try{acceptMetadata(await request('article',undefined,id),revision);}
+  catch(error){if(state.articleIndex?.revision===revision)state.listErrors.set(key,error.message);if(error.versionMismatch)loadData({background:true,force:true});}
+  finally{state.listPending.delete(key);if(state.view==='home')render();}
+}
+function articleName(article){return article.title||((tagsById().get(article.tag_ids[0])?.name||'文章')+' · '+(articleProjection().records.findIndex(a=>a.id===article.id)+1));}
 
 function preserveFocus(fn) {
   const active = document.activeElement, key = active?.dataset.focusKey, start = active?.selectionStart, end = active?.selectionEnd;
@@ -91,24 +124,24 @@ function render() {
     const content = el('main', { id: 'main', class: 'content', tabindex: '-1' }, el('div', { class: 'topbar' }, el('div', { class: 'breadcrumb' }, state.view === 'home' ? null : el('span', {}, '脉络')), state.themes.length && state.themes.every(t => t.is_demo) ? el('span', {}, '示例') : null));
     if (state.refreshError) content.append(el('div', { class: 'refresh-error', role: 'status' }, '更新失败：' + state.refreshError, button('重试', () => loadData(), 'text-button')));
     if (state.error) content.append(el('div', { class: 'page' }, renderError(state.error)));
-    else if (!state.catalog) content.append(el('div', { class: 'initial-state', role: 'status' }, '正在读取主题…'));
+    else if (!state.catalog) content.append(el('div', { class: 'initial-state', role: 'status' }, '正在读取总览…'));
     else content.append(state.view === 'home' ? renderHome() : renderDetail());
     app.replaceChildren(el('div', { class: `app-shell ${state.view==='home'?'home-view':'detail-view'}` }, sidebar, content));
     if (dialog.open) renderTagDialog();
     const newList=document.querySelector('.article-list');if(newList)newList.scrollTop=articleScroll;
-    scheduleGraph();
+    scheduleGraph();queueListLoad();
   });
 }
 function renderSidebar() {
   return el('aside', { class: 'sidebar' },
-    el('div',{class:'sidebar-brand'},el('a', { href: '#', class: 'brand', onclick: e => { e.preventDefault(); navigate('home'); } }, icon('imgGraph', 34), '判断力'),el('details',{class:'mobile-themes'},el('summary',{},'主题'),el('div',{class:'mobile-theme-menu'},state.themes.map(t=>button(t.theme.title,()=>navigate('detail',t.theme.id),'mobile-theme-link')))),state.themes.length&&state.themes.every(t=>t.is_demo)?el('span',{class:'mobile-scope'},'示例'):null),
+    el('div',{class:'sidebar-brand'},el('a', { href: '#', class: 'brand', onclick: e => { e.preventDefault(); navigate('home'); } }, icon('imgGraph', 34), '判断力'),state.themes.length&&state.themes.every(t=>t.is_demo)?el('span',{class:'mobile-scope'},'示例'):null),
     el('nav', { class: 'main-nav', 'aria-label': '主导航' },
       button([icon('imgGraph1', 17), '我的关注'], () => navigate('home'), `nav-item ${state.view === 'home' ? 'active' : ''}`, { 'aria-current': state.view === 'home' ? 'page' : null }),
       button([icon('imgTime', 17), '脉络'], () => state.selectedId && navigate('detail'), `nav-item ${state.view === 'detail' ? 'active' : ''}`, { disabled: !state.selectedId, 'aria-current': state.view === 'detail' ? 'page' : null })),
     el('div', { class: 'recent-heading' }, el('span', {}, '最近关注'), el('span', {}, String(state.themes.length).padStart(2, '0'))),
     el('div', { class: 'recent-list' }, state.themes.map(t => button([el('span', { class: 'theme-dot' }, icon(t.theme.id === state.selectedId ? 'img' : 'img1', 7)), el('span',{class:'recent-theme-title'},t.theme.title)], () => navigate('detail', t.theme.id), `recent-theme ${t.theme.id === state.selectedId ? 'active' : ''}`))));
 }
-function renderError(message) { return el('section', { class: 'error-state', role: 'alert' }, el('h2', {}, '暂时无法读取主题'), el('p', {}, message), button('重试', () => loadData())); }
+function renderError(message) { return el('section', { class: 'error-state', role: 'alert' }, el('h2', {}, state.view==='home'?'暂时无法读取总览':'暂时无法读取脉络'), el('p', {}, message), button('重试', async()=>{if(state.view==='detail'){await loadData();loadTheme(true);}else loadData();})); }
 function searchInput(placeholder, value, update, key) { return el('label', { class: 'search' }, icon('imgSearch', 16), el('input', { type: 'search', placeholder, value, 'aria-label': placeholder, 'data-focus-key': key, oninput: e => update(e.target.value) }), el('kbd', {}, '/')); }
 function toggleTag(id) { state.focusTagId=null; state.filters.has(id) ? state.filters.delete(id) : state.filters.add(id); reconcileSelection();render(); }
 function focusTag(id) { if(state.focusTagId===id)return;state.focusTagId=id;reconcileSelection();render(); }
@@ -116,24 +149,24 @@ function chooseTag(id) { if(state.tagIntent==='focus'){focusTag(id);dialog.close
 function tagChip(tag, interactive = true, path = false) { return button([tag.name, path && tag.depth === 3 ? el('span', { class: 'tag-path' }, tagsById().get(tag.parent_id)?.name || '') : null], interactive ? () => chooseTag(tag.id || tag.tag_id) : () => {}, `tag ${(state.tagIntent==='focus'?state.focusTagId=== (tag.id || tag.tag_id):state.filters.has(tag.id || tag.tag_id)) ? 'active' : ''} depth-${tag.depth || 2}`, { 'aria-pressed': interactive ? (state.tagIntent==='focus'?state.focusTagId===(tag.id||tag.tag_id):state.filters.has(tag.id||tag.tag_id)) : null, 'data-focus-key': 'tag-' + (tag.id || tag.tag_id), disabled: !interactive }); }
 let projectionCache=null;
 function articleProjection(){
-  if(projectionCache?.index===state.articleIndex&&projectionCache?.catalog===state.catalog)return projectionCache;
+  if(projectionCache?.index===state.articleIndex&&projectionCache?.catalog===state.catalog&&projectionCache?.metadataVersion===state.metadataVersion)return projectionCache;
   const byId=new Map(),tags=tagsById(),members=new Map(),contexts=new Map();
-  for(const row of state.articleIndex?.articles||[]){if(typeof row.id!=='string'||!Array.isArray(row.tag_ids))continue;const previous=byId.get(row.id);byId.set(row.id,{...(previous||row),tag_ids:[...new Set([...(previous?.tag_ids||[]),...row.tag_ids])].sort()});}
+  for(const row of state.articleIndex?.articles||[]){if(typeof row.id!=='string'||!Array.isArray(row.tag_ids))continue;const previous=byId.get(row.id);byId.set(row.id,{...(previous||row),...state.metadata.get(row.id),tag_ids:[...new Set([...(previous?.tag_ids||[]),...row.tag_ids])].sort()});}
   const records=[...byId.values()].sort((a,b)=>a.id.localeCompare(b.id));
   for(const article of records){const ids=new Set();for(const direct of article.tag_ids){let id=direct;const seen=new Set();while(id&&!seen.has(id)){seen.add(id);ids.add(id);if(!members.has(id))members.set(id,new Set());members.get(id).add(article.id);id=tags.get(id)?.parent_id;}}contexts.set(article.id,ids);}
-  projectionCache={index:state.articleIndex,catalog:state.catalog,records,byId,members,contexts};return projectionCache;
+  projectionCache={index:state.articleIndex,catalog:state.catalog,metadataVersion:state.metadataVersion,records,byId,members,contexts};return projectionCache;
 }
 function matchesArticle(article){
   const model=articleProjection(),context=model.contexts.get(article.id)||new Set(),tags=tagsById();
-  if(state.query&&!`${article.title} ${article.tag_ids.map(id=>tags.get(id)?.name||id).join(' ')}`.toLowerCase().includes(state.query.toLowerCase()))return false;
+  if(state.query&&state.fullIndexLoaded&&!`${article.title} ${article.tag_ids.map(id=>tags.get(id)?.name||id).join(' ')}`.toLowerCase().includes(state.query.toLowerCase()))return false;
   for(const dimension of ['domain','lens']){const filters=[...state.filters].filter(id=>tags.get(id)?.dimension===dimension);if(filters.length&&!filters.some(id=>context.has(id)))return false;}
   return true;
 }
 function reconcileSelection(){const article=articleProjection().byId.get(state.selectedArticleId);if(article&&(!matchesArticle(article)||(state.focusTagId&&!articleProjection().members.get(state.focusTagId)?.has(article.id))))state.selectedArticleId=null;}
-function selectArticle(id){
+function selectArticle(id,tagId=null){
   const model=articleProjection();if(!model.byId.has(id))return;
-  if(state.focusTagId&&!model.members.get(state.focusTagId)?.has(id))state.focusTagId=null;
-  state.selectedArticleId=id;render();const list=document.querySelector('.article-list');if(list)list.scrollTop=0;
+  if(state.focusTagId&&!model.members.get(state.focusTagId)?.has(id))state.focusTagId=(!state.query&&!state.filters.size&&tagId&&model.members.get(tagId)?.has(id))?tagId:null;
+  state.selectedArticleId=id;render();loadArticle(id);const list=document.querySelector('.article-list');if(list)list.scrollTop=0;
 }
 function renderHome() {
   const filtered=articleProjection().records.filter(matchesArticle);
@@ -143,7 +176,7 @@ function renderHome() {
     const byId=tagsById();
     page.append(el('div',{class:'filters'},el('div',{class:'filters-chips'},[...state.filters].map(id=>button([(byId.get(id)?.name||'标签待复核'),' ×'],()=>toggleTag(id),'tag active',{'data-filter-id':id,'aria-label':'移除筛选 '+(byId.get(id)?.name||id)})),state.query?el('span',{class:'tag'},state.query):null),button('清除',()=>{state.filters.clear();state.query='';state.focusTagId=null;state.selectedArticleId=null;render();},'text-button clear-filters')));
   }
-  page.append(el('div',{class:'home-layout'},el('div',{class:'graph-wrap','aria-label':'关注总览'},renderGraph(filtered)),renderArticles()));
+  page.append(el('div',{class:'home-layout'},el('div',{class:'graph-wrap','aria-label':'关注总览','data-bootstrap-ready':'true'},renderGraph(filtered)),renderArticles()));
   return page;
 }
 function tagPath(tag){const byId=tagsById(),path=[],seen=new Set();for(let current=tag;current&&!seen.has(current.id);current=byId.get(current.parent_id)){seen.add(current.id);path.unshift(current);}return path;}
@@ -156,6 +189,7 @@ function publicationDate(value){if(!value)return null;if(/^\d{4}(?:-\d{2})?$/.te
 function articleMeta(article){const date=publicationDate(article.published_at),basis={description:'简介依据',partial_text:'片段依据',full_text:'正文依据',transcript:'转写依据',link_only:'链接依据'}[article.evidence_basis]||'依据待确认';return `${date?date+' 发布':'日期待确认'} · ${basis}`;}
 function renderSelectedArticle(article){
   const tags=tagsById();
+  if(!metadataReady(article)){const key='article:'+article.id+'@'+state.articleIndex?.revision,error=state.listErrors.get(key);return el('section',{class:'selected-article','data-selected-article-id':article.id,'aria-label':'已选文章'},el('div',{role:'status',class:'article-empty'},error?'文章读取失败':'正在读取文章…'),error?button('重试',()=>loadArticle(article.id,true),'text-button'):null);}
   return el('section',{class:'selected-article','data-selected-article-id':article.id,'aria-label':'已选文章'},el('div',{class:'selection-heading'},el('span',{},'已选文章'),button('返回列表',()=>{state.selectedArticleId=null;render();},'text-button selection-clear')),el('h3',{class:'selected-title'},article.title),el('p',{class:'article-meta'},articleMeta(article)),link('打开来源',article.url,'selected-source'),el('div',{class:'article-coding'},el('h4',{},'直接标签'),article.tag_ids.map(id=>{const tag=tags.get(id),path=tag?tagPath(tag):[],ancestors=path.slice(0,-1).map(t=>t.name).join(' / ');return button([ancestors?el('span',{class:'coding-context'},ancestors+' / '):null,el('strong',{class:'coding-direct'},tag?.name||id)],()=>focusTag(id),'coding-tag',{'data-direct-tag-id':id,'aria-label':'直接标签：'+(tag?.name||id)+'；路径：'+path.map(t=>t.name).join(' / ')});})));
 }
 function renderArticles(){
@@ -164,10 +198,12 @@ function renderArticles(){
   const unavailable=state.articleError||!state.articleIndex?.available;
   const panel=el('aside',{class:'article-panel','aria-label':'文章','data-focus-tag-id':state.focusTagId||'','data-selected-article-id':state.selectedArticleId||'','data-group-count':groupTotal});
   const actions=el('div',{class:'article-actions'},tag?button('全部',()=>{state.focusTagId=null;render();},'text-button focus-reset',{'aria-label':'显示全部文章'}):null,tag?button(state.filters.has(tag.id)?'移除筛选':'筛选文章',()=>toggleTag(tag.id),'text-button panel-filter',{'aria-pressed':state.filters.has(tag.id),'data-focus-key':'panel-filter'}):null);
-  panel.append(el('div',{class:'article-heading'},el('div',{class:'article-path-row'},el('p',{class:'article-tag-path','data-full-path':full||'全部文章'},el('span',{class:'desktop-path'},parent||'我的关注'),el('span',{class:'compact-path'},full||'全部文章')),actions),el('div',{class:'article-name-row'},el('h2',{class:'article-tag-name'},tag?.name||'全部文章'),el('span',{class:'article-mobile-label'},tag?'聚焦':'全部'),el('span',{class:'article-count','aria-live':'polite'},unavailable?'—':`${articles.length}${articles.length!==groupTotal?' / '+groupTotal:''} 篇`))));
+  panel.append(el('div',{class:'article-heading'},el('div',{class:'article-path-row'},el('p',{class:'article-tag-path','data-full-path':full||'全部文章'},el('span',{class:'desktop-path'},parent||'我的关注'),el('span',{class:'compact-path'},full||'全部文章')),actions),el('div',{class:'article-name-row'},el('h2',{class:'article-tag-name'},tag?.name||'全部文章'),el('span',{class:'article-mobile-label'},tag?'聚焦':'全部'),el('span',{class:'article-count','aria-live':'polite'},unavailable?'—':state.query&&!state.fullIndexLoaded?'…':`${articles.length}${articles.length!==groupTotal?' / '+groupTotal:''} 篇`))));
   const list=el('div',{class:'article-list',tabindex:'0','aria-label':'文章列表','data-focus-key':'article-list'});
   const selected=model.byId.get(state.selectedArticleId);if(selected)list.append(renderSelectedArticle(selected));
+  const status=listStatus();
   if(unavailable)list.append(el('div',{class:'article-empty',role:'status'},state.articleError?'文章读取失败':'文章暂不可用',state.articleError?button('重试',()=>loadData(),'text-button'):null));
+  else if(!status.complete)list.append(el('div',{class:'article-empty',role:'status'},status.error?'文章读取失败':(state.query?'正在搜索…':'正在读取文章…'),status.error?button('重试',()=>loadList(true),'text-button list-retry'):null));
   else if(!articles.length)list.append(el('p',{class:'article-empty',role:'status'},'暂无相关文章'));
   else for(const article of articles){list.append(el('article',{class:`article-row ${article.id===state.selectedArticleId?'selected':''}`,'data-article-id':article.id,'data-selected':article.id===state.selectedArticleId},button([el('h3',{class:'article-title'},article.title),el('p',{class:'article-meta'},articleMeta(article)),![...(model.contexts.get(article.id)||[])].some(id=>tagsById().get(id)?.depth===2&&tagsById().get(id)?.status==='active')?el('span',{class:'list-only-note'},'暂无二级归属'):null],()=>selectArticle(article.id),'article-select',{'aria-pressed':article.id===state.selectedArticleId,'data-focus-key':'list-article-'+article.id})));}
   panel.append(list);return panel;
@@ -192,8 +228,8 @@ function graphTags(){
   return marks;
 }
 function renderGraph(filtered,width,height){
-  const compact=innerWidth<=1100,w=width||(compact?innerWidth-32:innerWidth-568),h=height||(compact?350:innerHeight-131),cx=w/2,cy=h/2;
-  const rings=compact?{'domain-1':[24,44],'domain-2':[52,72],'lens-1':[96,116],'lens-2':[124,144]}:{'domain-1':[114,146],'domain-2':[154,186],'lens-1':[210,242],'lens-2':[250,282]};
+  const compact=innerWidth<=1100,w=width||(compact?innerWidth-32:innerWidth-568),h=(height||(compact?350:innerHeight-131))-44,cx=w/2,cy=h/2;
+  const rings=compact?{'domain-1':[24,36],'domain-2':[44,64],'lens-1':[88,100],'lens-2':[108,128]}:{'domain-1':[114,132],'domain-2':[140,172],'lens-1':[196,214],'lens-2':[222,254]};
   const stage=el('div',{class:'graph-stage'}),svg=svgNode('svg',{class:'solar-graph',viewBox:`0 0 ${w} ${h}`,role:'group','aria-label':'文章与分类聚合图'}),marks=graphTags(),positions=new Map(),model=articleProjection(),selected=model.byId.get(state.selectedArticleId),coding=model.contexts.get(state.selectedArticleId)||new Set();
   const matching=new Set(filtered.map(a=>a.id)),focusMembers=state.focusTagId?(model.members.get(state.focusTagId)||new Set()):new Set(model.byId.keys()),hasFilter=!!(state.query||state.filters.size),n=model.records.length;
   const represented=new Set(marks.filter(m=>m.tag.depth===2).flatMap(m=>[...(model.members.get(m.tag.id)||[])]));
@@ -204,10 +240,10 @@ function renderGraph(filtered,width,height){
       const ids=[...(model.members.get(tag.id)||[])].sort(),navigation=ids.filter(id=>matching.has(id));
       ids.forEach((id,index)=>{
         const article=model.byId.get(id),tickAngle=start+(index+.5)/ids.length*(end-start),r1=inner+(compact?3:2),r2=compact?outer-3:inner+10,[x1,y1]=point(cx,cy,r1,tickAngle),[x2,y2]=point(cx,cy,r2,tickAngle),chosen=id===state.selectedArticleId,inFocus=focusMembers.has(id),match=matching.has(id),pair=tag.id+':'+id;
-        const coords={x1,y1,x2,y2},activate=e=>{e.stopPropagation();selectArticle(id);};
+        const coords={x1,y1,x2,y2},activate=e=>{e.stopPropagation();selectArticle(id,tag.id);};
         const hit=svgNode('line',{...coords,class:`article-tick-hit ${hasFilter&&!match?'filtered-out':''}`,'data-tick-hit':pair});hit.addEventListener('click',activate);group.append(hit);
-        const node=svgNode('line',{...coords,class:`graph-article article-tick ${inFocus?'in-focus':''} ${chosen?'selected':''} ${hasFilter&&!match?'filtered-out':''}`,role:'button',tabindex:!tabAllocated&&id===preferred?'0':'-1','aria-label':article.title+'；'+tagPath(tag).map(t=>t.name).join(' / '),'aria-pressed':chosen,'data-article-id':id,'data-tag-id':tag.id,'data-occurrence-id':pair,'data-in-focus':inFocus,'data-matches':match,'data-selected':chosen,'data-tick-inner':r1,'data-tick-outer':r2,'data-tick-angle':tickAngle,'data-segment-start':start,'data-segment-end':end,'data-segment-inner':inner,'data-segment-outer':outer,'data-focus-key':'tick-'+pair});if(id===preferred&&!tabAllocated)tabAllocated=true;
-        node.append(svgNode('title',{},article.title));node.addEventListener('click',activate);node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();selectArticle(id);}else if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();e.stopPropagation();const i=navigation.indexOf(id),next=navigation[(i+(['ArrowLeft','ArrowUp'].includes(e.key)?navigation.length-1:1))%navigation.length];if(next){selectArticle(next);document.querySelector(`.article-tick[data-article-id="${next}"][data-tag-id="${tag.id}"]`)?.focus({preventScroll:true});}}});group.append(node);
+        const node=svgNode('line',{...coords,class:`graph-article article-tick ${inFocus?'in-focus':''} ${chosen?'selected':''} ${hasFilter&&!match?'filtered-out':''}`,role:'button',tabindex:!tabAllocated&&id===preferred?'0':'-1','aria-label':articleName(article)+'；'+tagPath(tag).map(t=>t.name).join(' / '),'aria-pressed':chosen,'data-article-id':id,'data-tag-id':tag.id,'data-occurrence-id':pair,'data-in-focus':inFocus,'data-matches':match,'data-selected':chosen,'data-tick-inner':r1,'data-tick-outer':r2,'data-tick-angle':tickAngle,'data-segment-start':start,'data-segment-end':end,'data-segment-inner':inner,'data-segment-outer':outer,'data-focus-key':'tick-'+pair});if(id===preferred&&!tabAllocated)tabAllocated=true;
+        node.append(svgNode('title',{},articleName(article)));node.addEventListener('click',activate);node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();selectArticle(id,tag.id);}else if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();e.stopPropagation();const i=navigation.indexOf(id),next=navigation[(i+(['ArrowLeft','ArrowUp'].includes(e.key)?navigation.length-1:1))%navigation.length];if(next){selectArticle(next,tag.id);document.querySelector(`.article-tick[data-article-id="${next}"][data-tag-id="${tag.id}"]`)?.focus({preventScroll:true});}}});group.append(node);
       });
     }
     if(!compact){const radius=tag.depth===2?outer+(ring==='domain-2'?6:8):(inner+outer)/2,[x,y]=point(cx,cy,radius,angle),lines=labelLines(tag.name,4),text=svgNode('text',{class:`graph-label ${tag.depth===1?'level-one':'level-two'}`,x,y:y-(lines.length-1)*8});lines.forEach((line,i)=>text.append(svgNode('tspan',{x,dy:i?16:0},line)));group.append(text);}
@@ -221,14 +257,14 @@ function renderGraph(filtered,width,height){
   const focus=positions.get(state.focusTagId);
   if(compact&&focus){const[x,y]=point(cx,cy,focus.outer,focus.angle),right=x>=cx,labelWidth=Math.min(156,Array.from(focus.tag.name).length*12+44),lx=Math.min(w-labelWidth-2,Math.max(2,right?x+34:x-labelWidth-34)),ly=Math.min(h-30,Math.max(22,y-13));svg.append(svgNode('line',{class:'focus-leader',x1:x,y1:y,x2:right?lx-4:lx+labelWidth+4,y2:ly+13}));svg.append(svgNode('circle',{class:'focus-point',cx:x,cy:y,r:2.5}));stage.append(button(focus.tag.name+' · '+(model.members.get(focus.tag.id)?.size||0),()=>openTags('focus'),'focus-callout',{'data-focus-key':'focus-callout','data-tag-id':focus.tag.id,'aria-label':'切换焦点标签：'+tagPath(focus.tag).map(t=>t.name).join(' / '),style:{left:lx+'px',top:ly+'px',width:labelWidth+'px'},'aria-haspopup':'dialog'}));}
   if(compact&&!focus){const tag=tagsById().get(state.focusTagId);if(tag)stage.append(button(tag.name,()=>openTags('focus'),'focus-callout',{'data-focus-key':'focus-callout','data-tag-id':tag.id,'aria-label':'切换焦点标签：'+tagPath(tag).map(t=>t.name).join(' / '),style:{left:Math.max(2,w-158)+'px',top:'0px',width:'156px'},'aria-haspopup':'dialog'}));}
-  return stage;
+  return el('div',{class:'graph-composition'},stage,el('nav',{class:'overview-themes','aria-label':'主题脉络'},state.themes.map(t=>button([el('span',{class:'theme-entry-label'},'脉络'),el('span',{class:'theme-entry-title'},t.theme.title)],()=>navigate('detail',t.theme.id),'overview-theme-entry',{'data-theme-id':t.theme.id,'aria-label':'主题脉络：'+t.theme.title}))));
 }
 let graphFrame=0;
 function scheduleGraph(){cancelAnimationFrame(graphFrame);graphFrame=requestAnimationFrame(()=>{const wrap=document.querySelector('.graph-wrap');if(!wrap)return;const{width,height}=wrap.getBoundingClientRect();if(width&&height)preserveFocus(()=>wrap.replaceChildren(renderGraph(articleProjection().records.filter(matchesArticle),width,height)));});}
 
 function renderDetail() {
   const page=el('section',{class:'page detail-page'}); const view=currentTheme();
-  if(!view){page.append(state.loading?el('div',{class:'initial-state'},'正在读取主题…'):renderError('该主题不存在或尚未保存'));return page;}
+  if(!view){page.append(state.themeErrors.has(state.selectedId)?renderError(state.themeErrors.get(state.selectedId)):el('div',{class:'initial-state',role:'status'},'正在读取脉络…'));return page;}
   page.append(button([icon('imgBack',14),'返回关注'],()=>navigate('home'),'back-button'),el('div',{class:'detail-heading'},el('h1',{},view.theme.title),button('原稿',()=>openMarkdown(),`button ${state.showMarkdown?'active':''}`)),el('div',{class:'tags-inline'},selectedTags(view).map(t=>el('span',{class:'tag'},t.name)),view.needs_tag_review?el('span',{class:'tag-review'},'标签待复核'):null));
   if(view.theme.question.trim() !== view.theme.title.trim())page.append(el('div',{class:'question-box'},el('span',{class:'question-symbol'},icon('imgSpark',18)),el('p',{},view.theme.question)));
   const ordered=[...(view.timeline.observed||[]),...(view.timeline.upcoming||[]),...(view.timeline.undated||[])];
@@ -351,7 +387,7 @@ function renderMarkdown(markdown,view,includeAnchors=true){
 function renderFullMarkdown(view){return el('section',{class:'md-panel',id:'full-markdown'},el('div',{class:'md-heading'},el('h2',{},'分析原稿'),button('收起',()=>{state.showMarkdown=false;render();},'button quiet')),renderMarkdown(view.analysis_markdown,view),el('div',{class:'evidence-section'},el('h3',{},'来源片段'),view.sources.map(renderSource)));}
 function openMarkdown(section){state.showMarkdown=true;render();requestAnimationFrame(()=>{const target=document.getElementById(section?'md-'+section:'full-markdown');target?.scrollIntoView({behavior:'smooth',block:'start'});if(target&&section){target.classList.add('highlight');target.nextElementSibling?.classList.add('highlight');}});}
 
-function openTags(intent='filter'){state.tagIntent=intent;renderTagDialog();dialog.showModal();document.querySelector('.tag-toggle')?.setAttribute('aria-expanded','true');}
+async function openTags(intent='filter'){state.tagIntent=intent;renderTagDialog();dialog.showModal();document.querySelector('.tag-toggle')?.setAttribute('aria-expanded','true');if(state.fullCatalogRevision===state.catalogRevision)return;const revision=state.catalogRevision;try{const response=await request('catalog');if(response.catalog_revision===revision){state.catalog=response.catalog;state.fullCatalogRevision=revision;if(dialog.open)preserveFocus(renderTagDialog);}}catch{if(dialog.open)dialog.append(el('p',{class:'article-empty',role:'status'},'标签详情暂不可用'));}}
 function renderTagDialog(){dialog.className='tag-dialog';const q=state.tagQuery.toLowerCase();const active=(state.catalog?.tags||[]).filter(t=>t.status==='active'&&['domain','lens'].includes(t.dimension));
   const content=el('div',{},el('div',{class:'dialog-heading'},el('h2',{id:'tags-title'},'标签'),searchInput('搜索标签',state.tagQuery,value=>{state.tagQuery=value;preserveFocus(renderTagDialog);},'tag-search'),button('收起',()=>dialog.close(),'button quiet')));
   for(const dimension of ['domain','lens']){const section=el('section',{class:'tag-dimension'},el('h3',{},dimension==='domain'?'领域':'视角'));let count=0;for(const root of active.filter(t=>t.dimension===dimension&&t.depth===1)){const children=active.filter(t=>t.dimension===dimension&&t.depth>1&&(t.parent_id===root.id||active.find(p=>p.id===t.parent_id)?.parent_id===root.id));const rootMatch=root.name.toLowerCase().includes(q);const filtered=rootMatch?children:children.filter(t=>(t.name+' '+(t.definition||'')+' '+(t.aliases||[]).join(' ')).toLowerCase().includes(q));if(q&&!rootMatch&&!filtered.length)continue;count++;section.append(el('div',{class:'tag-group'},button(root.name,()=>chooseTag(root.id),`tag tag-group-root ${(state.tagIntent==='focus'?state.focusTagId===root.id:state.filters.has(root.id))?'active':''}`,{'aria-pressed':state.tagIntent==='focus'?state.focusTagId===root.id:state.filters.has(root.id),'data-focus-key':'tag-'+root.id}),el('div',{class:'tag-group-children'},filtered.map(t=>tagChip(t,true,true)))));}if(count)content.append(section);}
@@ -360,11 +396,11 @@ function renderTagDialog(){dialog.className='tag-dialog';const q=state.tagQuery.
 
 dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();}});
 dialog.addEventListener('close',()=>{document.querySelector('.tag-toggle')?.setAttribute('aria-expanded','false');if(document.activeElement===document.body)document.querySelector(state.tagIntent==='focus'?'.focus-callout':'.tag-toggle')?.focus({preventScroll:true});});
-window.addEventListener('popstate',()=>{parseRoute();state.selectedNodeId=null;state.showMarkdown=false;state.readerTab='node';render();loadData();});
+window.addEventListener('popstate',()=>{parseRoute();state.selectedNodeId=null;state.showMarkdown=false;state.readerTab='node';render();loadCurrentView();});
 window.addEventListener('resize',()=>{render();});
 window.addEventListener('focus',()=>loadData({background:true}));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadData({background:true});});
 document.addEventListener('keydown',event=>{if(event.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){event.preventDefault();if(!dialog.open&&state.view==='home'&&innerWidth<=1100&&!state.searchOpen){state.searchOpen=true;render();}document.querySelector(dialog.open?'#tags-dialog input':'.search input')?.focus();}});
-setInterval(()=>{if(!document.hidden)loadData({background:true});},4000);
+setInterval(()=>{if(!document.hidden)loadData({background:true});},dataMode==='static'?60000:4000);
 document.querySelector('.skip-link').addEventListener('click',event=>{event.preventDefault();document.getElementById('main')?.focus();});
 parseRoute();render();loadData();
