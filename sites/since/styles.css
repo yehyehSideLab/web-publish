@@ -165,3 +165,13 @@
 
 .graph-scope-summary{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .home-page{width:100%;margin:0}
+
+/* Source articles are radial ticks inside their real second-level segment. */
+.article-tick{fill:none;stroke:#b3c2d3;stroke-width:1.8;stroke-linecap:round;pointer-events:stroke}
+.article-tick.in-focus{stroke:#6385ad;stroke-width:1.8}
+.article-tick.selected{stroke:#243b58;stroke-width:3}
+.article-tick:hover,.article-tick:focus-visible{stroke:#173d69;stroke-width:3;outline:none}
+.article-tick-hit{stroke:transparent;stroke-width:5;pointer-events:stroke;cursor:pointer}
+.article-tick-hit.filtered-out{visibility:hidden;pointer-events:none}
+.graph-label.level-two{paint-order:stroke;stroke:white;stroke-width:3px;stroke-linejoin:round;pointer-events:all}
+.list-only-note{font-size:12px;line-height:20px;color:#727d8c}
