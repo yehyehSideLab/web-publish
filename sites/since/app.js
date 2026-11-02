@@ -1,7 +1,7 @@
 const app = document.querySelector('#app');
 const dialog = document.querySelector('#tags-dialog');
 const dataMode = document.querySelector('meta[name="since-data-mode"]')?.content || 'api';
-const state = { themes: [], catalog: null, catalogRevision: null, details: new Map(), selectedId: null, selectedNodeId: null, view: 'home', query: '', tagQuery: '', filters: new Set(), loading: false, error: null, refreshError: null, showMarkdown: false, readerTab: 'node', signature: '', controller: null, focusTagId: null, tagIntent: 'filter', searchOpen: false, articleIndex: null, articleError: null };
+const state = { themes: [], catalog: null, catalogRevision: null, details: new Map(), selectedId: null, selectedNodeId: null, view: 'home', query: '', tagQuery: '', filters: new Set(), loading: false, error: null, refreshError: null, showMarkdown: false, readerTab: 'node', signature: '', controller: null, focusTagId: null, tagIntent: 'filter', searchOpen: false, articleIndex: null, articleError: null, selectedArticleId: null, focusInitialized: false };
 const claimLabels = { fact: '事实', source_statement: '来源说法', inference: '分析推断' };
 const basisLabels = { full_text: '正文', transcript: '转写', partial_text: '已读片段', description: '简介', link_only: '仅链接' };
 const dateLabels = { event: '发生', publication: '发布', discovery: '发现', unknown: '时间待确认' };
@@ -9,11 +9,11 @@ const dateLabels = { event: '发生', publication: '发布', discovery: '发现'
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(attrs)) {
-    if (value === null || value === undefined || value === false) continue;
+    if (value === null || value === undefined || (value === false && !key.startsWith('aria-') && !key.startsWith('data-'))) continue;
     if (key.startsWith('on')) node.addEventListener(key.slice(2).toLowerCase(), value);
     else if (key === 'class') node.className = value;
     else if (key === 'style' && typeof value === 'object') for (const [name, setting] of Object.entries(value)) node.style.setProperty(name, setting);
-    else if (value === true) node.setAttribute(key, '');
+    else if (value === true) node.setAttribute(key, key.startsWith('aria-') || key.startsWith('data-') ? 'true' : '');
     else node.setAttribute(key, String(value));
   }
   for (const child of children.flat(Infinity)) if (child !== null && child !== undefined && child !== false) node.append(child instanceof Node ? child : document.createTextNode(String(child)));
@@ -57,9 +57,11 @@ async function loadData({ background = false } = {}) {
     const signature = JSON.stringify([themes, catalogResponse.catalog_revision, id, detail?.revision, articlesResult.value?.revision, articlesResult.error?.message]);
     const changed = signature !== state.signature || !!state.error || !!state.refreshError;
     state.articleIndex = articlesResult.error ? null : articlesResult.value; state.articleError = articlesResult.error?.message || null;
-    if (!state.focusTagId) state.focusTagId = catalogResponse.catalog.tags.find(t=>t.id==='domain.information-media.recommendation-systems'&&t.status==='active')?.id || catalogResponse.catalog.tags.find(t=>t.depth===2&&t.status==='active')?.id;
+    if (!state.focusInitialized) state.focusTagId = catalogResponse.catalog.tags.find(t=>t.id==='domain.information-media.recommendation-systems'&&t.status==='active')?.id || catalogResponse.catalog.tags.find(t=>t.depth===2&&t.status==='active')?.id;
+    state.focusInitialized = true;
     state.themes = themes; state.catalog = catalogResponse.catalog; state.catalogRevision = catalogResponse.catalog_revision; state.selectedId = id;
     if (detail) state.details.set(id, detail);
+    if(state.selectedArticleId&&!articleProjection().byId.has(state.selectedArticleId))state.selectedArticleId=null;reconcileSelection();
     state.signature = signature; state.error = null; state.refreshError = null; state.loading = false;
     if (changed) render();
   } catch (error) {
@@ -99,7 +101,7 @@ function render() {
 }
 function renderSidebar() {
   return el('aside', { class: 'sidebar' },
-    el('div',{class:'sidebar-brand'},el('a', { href: '#', class: 'brand', onclick: e => { e.preventDefault(); navigate('home'); } }, icon('imgGraph', 34), '判断力'),state.themes.length&&state.themes.every(t=>t.is_demo)?el('span',{class:'mobile-scope'},'示例'):null),
+    el('div',{class:'sidebar-brand'},el('a', { href: '#', class: 'brand', onclick: e => { e.preventDefault(); navigate('home'); } }, icon('imgGraph', 34), '判断力'),el('details',{class:'mobile-themes'},el('summary',{},'主题'),el('div',{class:'mobile-theme-menu'},state.themes.map(t=>button(t.theme.title,()=>navigate('detail',t.theme.id),'mobile-theme-link')))),state.themes.length&&state.themes.every(t=>t.is_demo)?el('span',{class:'mobile-scope'},'示例'):null),
     el('nav', { class: 'main-nav', 'aria-label': '主导航' },
       button([icon('imgGraph1', 17), '我的关注'], () => navigate('home'), `nav-item ${state.view === 'home' ? 'active' : ''}`, { 'aria-current': state.view === 'home' ? 'page' : null }),
       button([icon('imgTime', 17), '脉络'], () => state.selectedId && navigate('detail'), `nav-item ${state.view === 'detail' ? 'active' : ''}`, { disabled: !state.selectedId, 'aria-current': state.view === 'detail' ? 'page' : null })),
@@ -108,27 +110,38 @@ function renderSidebar() {
 }
 function renderError(message) { return el('section', { class: 'error-state', role: 'alert' }, el('h2', {}, '暂时无法读取主题'), el('p', {}, message), button('重试', () => loadData())); }
 function searchInput(placeholder, value, update, key) { return el('label', { class: 'search' }, icon('imgSearch', 16), el('input', { type: 'search', placeholder, value, 'aria-label': placeholder, 'data-focus-key': key, oninput: e => update(e.target.value) }), el('kbd', {}, '/')); }
-function toggleTag(id) { state.focusTagId=id; state.filters.has(id) ? state.filters.delete(id) : state.filters.add(id); render(); }
-function focusTag(id) { if(state.focusTagId===id)return; state.focusTagId=id; render(); }
+function toggleTag(id) { state.focusTagId=null; state.filters.has(id) ? state.filters.delete(id) : state.filters.add(id); reconcileSelection();render(); }
+function focusTag(id) { if(state.focusTagId===id)return;state.focusTagId=id;reconcileSelection();render(); }
 function chooseTag(id) { if(state.tagIntent==='focus'){focusTag(id);dialog.close();document.querySelector('.focus-callout')?.focus({preventScroll:true});}else toggleTag(id); }
 function tagChip(tag, interactive = true, path = false) { return button([tag.name, path && tag.depth === 3 ? el('span', { class: 'tag-path' }, tagsById().get(tag.parent_id)?.name || '') : null], interactive ? () => chooseTag(tag.id || tag.tag_id) : () => {}, `tag ${(state.tagIntent==='focus'?state.focusTagId=== (tag.id || tag.tag_id):state.filters.has(tag.id || tag.tag_id)) ? 'active' : ''} depth-${tag.depth || 2}`, { 'aria-pressed': interactive ? (state.tagIntent==='focus'?state.focusTagId===(tag.id||tag.tag_id):state.filters.has(tag.id||tag.tag_id)) : null, 'data-focus-key': 'tag-' + (tag.id || tag.tag_id), disabled: !interactive }); }
-function matches(theme) {
-  if (state.query && !`${theme.theme.title} ${theme.theme.question} ${theme.theme.scope}`.toLowerCase().includes(state.query.toLowerCase())) return false;
-  const tags = tagsById();
-  const assigned = new Set(selectedTags(theme).flatMap(t => [t.tag_id, ...(t.path || []).map(p => p.id)]));
-  for (const dimension of ['domain', 'lens']) {
-    const filters = [...state.filters].filter(id => tags.get(id)?.dimension === dimension);
-    if (filters.length && !filters.some(id => assigned.has(id))) return false;
-  }
+let projectionCache=null;
+function articleProjection(){
+  if(projectionCache?.index===state.articleIndex&&projectionCache?.catalog===state.catalog)return projectionCache;
+  const byId=new Map(),tags=tagsById(),members=new Map(),contexts=new Map();
+  for(const row of state.articleIndex?.articles||[]){if(typeof row.id!=='string'||!Array.isArray(row.tag_ids))continue;const previous=byId.get(row.id);byId.set(row.id,{...(previous||row),tag_ids:[...new Set([...(previous?.tag_ids||[]),...row.tag_ids])].sort()});}
+  const records=[...byId.values()].sort((a,b)=>a.id.localeCompare(b.id));
+  for(const article of records){const ids=new Set();for(const direct of article.tag_ids){let id=direct;const seen=new Set();while(id&&!seen.has(id)){seen.add(id);ids.add(id);if(!members.has(id))members.set(id,new Set());members.get(id).add(article.id);id=tags.get(id)?.parent_id;}}contexts.set(article.id,ids);}
+  projectionCache={index:state.articleIndex,catalog:state.catalog,records,byId,members,contexts};return projectionCache;
+}
+function matchesArticle(article){
+  const model=articleProjection(),context=model.contexts.get(article.id)||new Set(),tags=tagsById();
+  if(state.query&&!`${article.title} ${article.tag_ids.map(id=>tags.get(id)?.name||id).join(' ')}`.toLowerCase().includes(state.query.toLowerCase()))return false;
+  for(const dimension of ['domain','lens']){const filters=[...state.filters].filter(id=>tags.get(id)?.dimension===dimension);if(filters.length&&!filters.some(id=>context.has(id)))return false;}
   return true;
 }
+function reconcileSelection(){const article=articleProjection().byId.get(state.selectedArticleId);if(article&&(!matchesArticle(article)||(state.focusTagId&&!articleProjection().members.get(state.focusTagId)?.has(article.id))))state.selectedArticleId=null;}
+function selectArticle(id){
+  const model=articleProjection();if(!model.byId.has(id))return;
+  if(state.focusTagId&&!model.members.get(state.focusTagId)?.has(id))state.focusTagId=null;
+  state.selectedArticleId=id;render();const list=document.querySelector('.article-list');if(list)list.scrollTop=0;
+}
 function renderHome() {
-  const filtered=state.themes.filter(matches);
-  const heading=el('div',{class:`page-heading overview-heading ${state.searchOpen?'searching':''}`},el('h1',{},'我的关注'),el('div',{class:'overview-search'},searchInput('搜索主题',state.query,value=>{state.query=value;render();},'theme-search')),button(state.searchOpen?'收起':'搜索',()=>{state.searchOpen=!state.searchOpen;render();if(state.searchOpen)document.querySelector('.overview-search input')?.focus();},'compact-search text-button',{'aria-expanded':state.searchOpen,'data-focus-key':'search-toggle'}),button('标签',()=>openTags('filter'),'button tag-toggle',{'aria-haspopup':'dialog','aria-expanded':dialog.open,'data-focus-key':'tag-toggle'}));
+  const filtered=articleProjection().records.filter(matchesArticle);
+  const heading=el('div',{class:`page-heading overview-heading ${state.searchOpen?'searching':''}`},el('h1',{},'我的关注'),el('div',{class:'overview-search'},searchInput('搜索文章',state.query,value=>{state.query=value;state.focusTagId=null;reconcileSelection();render();},'theme-search')),button(state.searchOpen?'收起':'搜索',()=>{state.searchOpen=!state.searchOpen;render();if(state.searchOpen)document.querySelector('.overview-search input')?.focus();},'compact-search text-button',{'aria-expanded':state.searchOpen,'data-focus-key':'search-toggle'}),button('标签',()=>openTags('filter'),'button tag-toggle',{'aria-haspopup':'dialog','aria-expanded':dialog.open,'data-focus-key':'tag-toggle'}));
   const page=el('section',{class:'page home-page'},heading);
   if(state.filters.size||state.query){
     const byId=tagsById();
-    page.append(el('div',{class:'filters'},el('div',{class:'filters-chips'},[...state.filters].map(id=>button([(byId.get(id)?.name||'标签待复核'),' ×'],()=>toggleTag(id),'tag active',{'data-filter-id':id,'aria-label':'移除筛选 '+(byId.get(id)?.name||id)})),state.query?el('span',{class:'tag'},state.query):null),button('清除',()=>{state.filters.clear();state.query='';render();},'text-button clear-filters')));
+    page.append(el('div',{class:'filters'},el('div',{class:'filters-chips'},[...state.filters].map(id=>button([(byId.get(id)?.name||'标签待复核'),' ×'],()=>toggleTag(id),'tag active',{'data-filter-id':id,'aria-label':'移除筛选 '+(byId.get(id)?.name||id)})),state.query?el('span',{class:'tag'},state.query):null),button('清除',()=>{state.filters.clear();state.query='';state.focusTagId=null;state.selectedArticleId=null;render();},'text-button clear-filters')));
   }
   page.append(el('div',{class:'home-layout'},el('div',{class:'graph-wrap','aria-label':'关注总览'},renderGraph(filtered)),renderArticles()));
   return page;
@@ -136,30 +149,28 @@ function renderHome() {
 function tagPath(tag){const byId=tagsById(),path=[],seen=new Set();for(let current=tag;current&&!seen.has(current.id);current=byId.get(current.parent_id)){seen.add(current.id);path.unshift(current);}return path;}
 function tagContains(parentId,assignedId){const byId=tagsById(),seen=new Set();for(let id=assignedId;id&&!seen.has(id);id=byId.get(id)?.parent_id){if(id===parentId)return true;seen.add(id);}return false;}
 function focusArticles(){
-  const unique=new Map();
-  for(const article of state.articleIndex?.articles||[]){if(!Array.isArray(article.tag_ids)||!article.tag_ids.some(id=>tagContains(state.focusTagId,id)))continue;if(!unique.has(article.id))unique.set(article.id,article);}
-  return [...unique.values()].sort((a,b)=>(Date.parse(b.published_at)||-Infinity)-(Date.parse(a.published_at)||-Infinity)||a.id.localeCompare(b.id));
+  const model=articleProjection(),members=state.focusTagId?model.members.get(state.focusTagId):null;
+  return model.records.filter(article=>matchesArticle(article)&&(!state.focusTagId||members?.has(article.id))).sort((a,b)=>(Date.parse(b.published_at)||-Infinity)-(Date.parse(a.published_at)||-Infinity)||a.id.localeCompare(b.id));
 }
 function publicationDate(value){if(!value)return null;if(/^\d{4}(?:-\d{2})?$/.test(value))return value;const date=new Date(value);return Number.isNaN(date.valueOf())?null:date.toISOString().slice(0,10);}
+function articleMeta(article){const date=publicationDate(article.published_at),basis={description:'简介依据',partial_text:'片段依据',full_text:'正文依据',transcript:'转写依据',link_only:'链接依据'}[article.evidence_basis]||'依据待确认';return `${date?date+' 发布':'日期待确认'} · ${basis}`;}
+function renderSelectedArticle(article){
+  const tags=tagsById();
+  return el('section',{class:'selected-article','data-selected-article-id':article.id,'aria-label':'已选文章'},el('div',{class:'selection-heading'},el('span',{},'已选文章'),button('返回列表',()=>{state.selectedArticleId=null;render();},'text-button selection-clear')),el('h3',{class:'selected-title'},article.title),el('p',{class:'article-meta'},articleMeta(article)),link('打开来源',article.url,'selected-source'),el('div',{class:'article-coding'},el('h4',{},'直接标签'),article.tag_ids.map(id=>{const tag=tags.get(id),path=tag?tagPath(tag):[],ancestors=path.slice(0,-1).map(t=>t.name).join(' / ');return button([ancestors?el('span',{class:'coding-context'},ancestors+' / '):null,el('strong',{class:'coding-direct'},tag?.name||id)],()=>focusTag(id),'coding-tag',{'data-direct-tag-id':id,'aria-label':'直接标签：'+(tag?.name||id)+'；路径：'+path.map(t=>t.name).join(' / ')});})));
+}
 function renderArticles(){
-  const tag=tagsById().get(state.focusTagId),path=tag?tagPath(tag):[],articles=focusArticles();
-  const parent=path.slice(0,-1).map(t=>t.name).join(' / '),full=path.map(t=>t.name).join(' / ');
+  const model=articleProjection(),tag=tagsById().get(state.focusTagId),path=tag?tagPath(tag):[],articles=focusArticles();
+  const parent=path.slice(0,-1).map(t=>t.name).join(' / '),full=path.map(t=>t.name).join(' / '),groupTotal=tag?(model.members.get(tag.id)?.size||0):model.records.length;
   const unavailable=state.articleError||!state.articleIndex?.available;
-  const panel=el('aside',{class:'article-panel','aria-label':'标签文章','data-focus-tag-id':state.focusTagId});
-  const action=tag?button(state.filters.has(tag.id)?'移除筛选':'筛选主题',()=>toggleTag(tag.id),'text-button panel-filter',{'aria-pressed':state.filters.has(tag.id),'data-focus-key':'panel-filter'}):null;
-  panel.append(el('div',{class:'article-heading'},el('div',{class:'article-path-row'},el('p',{class:'article-tag-path','data-full-path':full},el('span',{class:'desktop-path'},parent||tag?.name||'标签'),el('span',{class:'compact-path'},full||'标签')),action),el('div',{class:'article-name-row'},el('h2',{class:'article-tag-name'},tag?.name||'标签'),el('span',{class:'article-mobile-label'},'文章'),el('span',{class:'article-count','aria-live':'polite'},unavailable?'—':`${articles.length} 条`))));
-  const list=el('div',{class:'article-list',tabindex:'0','aria-label':'相关文章','data-focus-key':'article-list'});
+  const panel=el('aside',{class:'article-panel','aria-label':'文章','data-focus-tag-id':state.focusTagId||'','data-selected-article-id':state.selectedArticleId||'','data-group-count':groupTotal});
+  const actions=el('div',{class:'article-actions'},tag?button('全部',()=>{state.focusTagId=null;render();},'text-button focus-reset',{'aria-label':'显示全部文章'}):null,tag?button(state.filters.has(tag.id)?'移除筛选':'筛选文章',()=>toggleTag(tag.id),'text-button panel-filter',{'aria-pressed':state.filters.has(tag.id),'data-focus-key':'panel-filter'}):null);
+  panel.append(el('div',{class:'article-heading'},el('div',{class:'article-path-row'},el('p',{class:'article-tag-path','data-full-path':full||'全部文章'},el('span',{class:'desktop-path'},parent||'我的关注'),el('span',{class:'compact-path'},full||'全部文章')),actions),el('div',{class:'article-name-row'},el('h2',{class:'article-tag-name'},tag?.name||'全部文章'),el('span',{class:'article-mobile-label'},tag?'聚焦':'全部'),el('span',{class:'article-count','aria-live':'polite'},unavailable?'—':`${articles.length}${articles.length!==groupTotal?' / '+groupTotal:''} 篇`))));
+  const list=el('div',{class:'article-list',tabindex:'0','aria-label':'文章列表','data-focus-key':'article-list'});
+  const selected=model.byId.get(state.selectedArticleId);if(selected)list.append(renderSelectedArticle(selected));
   if(unavailable)list.append(el('div',{class:'article-empty',role:'status'},state.articleError?'文章读取失败':'文章暂不可用',state.articleError?button('重试',()=>loadData(),'text-button'):null));
   else if(!articles.length)list.append(el('p',{class:'article-empty',role:'status'},'暂无相关文章'));
-  else for(const article of articles){
-    const date=publicationDate(article.published_at),basis={description:'简介依据',partial_text:'片段依据',full_text:'正文依据',transcript:'转写依据',link_only:'链接依据'}[article.evidence_basis]||'依据待确认';
-    const url=safeURL(article.url);
-    list.append(el('article',{class:'article-row','data-article-id':article.id},el(url?'a':'div',{class:'article-link',href:url,target:url?'_blank':null,rel:url?'noopener noreferrer':null},el('h3',{class:'article-title'},article.title),el('p',{class:'article-meta'},`${date?date+' 发布':'日期待确认'} · ${basis}`))));
-  }
-  panel.append(list);
-  const themes=tag?state.themes.filter(t=>selectedTags(t).some(assigned=>tagContains(tag.id,assigned.tag_id))):[];
-  if(themes.length)panel.append(el('div',{class:'article-themes'},el('h3',{},'主题'),themes.map(t=>button(t.theme.title,()=>navigate('detail',t.theme.id),'article-theme-link',{'data-theme-id':t.theme.id}))));
-  return panel;
+  else for(const article of articles){list.append(el('article',{class:`article-row ${article.id===state.selectedArticleId?'selected':''}`,'data-article-id':article.id,'data-selected':article.id===state.selectedArticleId},button([el('h3',{class:'article-title'},article.title),el('p',{class:'article-meta'},articleMeta(article))],()=>selectArticle(article.id),'article-select',{'aria-pressed':article.id===state.selectedArticleId,'data-focus-key':'list-article-'+article.id})));}
+  panel.append(list);return panel;
 }
 
 const NS='http://www.w3.org/2000/svg';
@@ -170,41 +181,47 @@ function labelLines(name,max=4){if(name==='信息可视化')return['信息','可
 function themeLines(title){const comma=title.indexOf('，');if(comma>=0&&comma<13)return[title.slice(0,comma+1),title.slice(comma+1)];const split=title.indexOf('表达');return split>0?[title.slice(0,split),title.slice(split)]:labelLines(title,10);}
 function graphTags(){
   const tags=(state.catalog?.tags||[]).filter(t=>t.status==='active');
-  const used=new Set(state.themes.flatMap(t=>selectedTags(t).flatMap(tag=>[tag.tag_id,...(tag.path||[]).map(p=>p.id)])));
+  const used=new Set(articleProjection().members.keys());
   const visible=t=>t.attention_scope!=='available_not_followed'||used.has(t.id);
   const roots=tags.filter(t=>t.depth===1&&t.dimension==='domain'&&(t.origin==='user_confirmed'||used.has(t.id)));
-  const total=roots.reduce((n,r)=>n+tags.filter(t=>t.parent_id===r.id&&t.depth===2&&visible(t)).length,0)||1;
-  const marks=[];let cursor=-104;
-  roots.forEach(root=>{const children=tags.filter(t=>t.parent_id===root.id&&t.depth===2&&visible(t)),width=children.length/total*360;marks.push({tag:root,ring:'domain-1',start:cursor+3,end:cursor+width-3,angle:(cursor*2+width)/2});children.forEach((tag,i)=>{const angle=cursor+(i+.5)*width/(children.length||1);marks.push({tag,ring:'domain-2',start:angle-6.5,end:angle+6.5,angle});});cursor+=width;});
+  const total=roots.length||1;
+  const marks=[];let cursor=-90;
+  roots.forEach(root=>{const children=tags.filter(t=>t.parent_id===root.id&&t.depth===2&&visible(t)),width=360/total;marks.push({tag:root,ring:'domain-1',start:cursor+3,end:cursor+width-3,angle:(cursor*2+width)/2});children.forEach((tag,i)=>{const angle=cursor+(i+.5)*width/(children.length||1);marks.push({tag,ring:'domain-2',start:angle-Math.min(6.5,width/Math.max(1,children.length)*.4),end:angle+Math.min(6.5,width/Math.max(1,children.length)*.4),angle});});cursor+=width;});
   const lenses=tags.filter(t=>t.depth===1&&t.dimension==='lens'&&(['user_confirmed','spielzeit_framework'].includes(t.origin)||used.has(t.id)));
   lenses.forEach((root,i)=>{const angle=-45+i*360/lenses.length;marks.push({tag:root,ring:'lens-1',start:angle-35,end:angle+35,angle});tags.filter(t=>t.depth===2&&t.parent_id===root.id&&visible(t)).forEach((tag,j,children)=>{const a=angle+(j-(children.length-1)/2)*24;marks.push({tag,ring:'lens-2',start:a-8,end:a+8,angle:a});});});
   return marks;
 }
-function renderGraph(themes,width,height){
+function renderGraph(filtered,width,height){
   const compact=innerWidth<=1100,w=width||(compact?innerWidth-32:innerWidth-568),h=height||(compact?350:innerHeight-131),cx=w/2,cy=h/2;
   const rings=compact?{'domain-1':[24,44],'domain-2':[52,72],'lens-1':[96,116],'lens-2':[124,144]}:{'domain-1':[114,146],'domain-2':[154,186],'lens-1':[210,242],'lens-2':[250,282]};
-  const stage=el('div',{class:'graph-stage'}),svg=svgNode('svg',{class:'solar-graph',viewBox:`0 0 ${w} ${h}`,role:'group','aria-label':'领域、视角与主题标签图'}),marks=graphTags(),positions=new Map();
-  for(const mark of marks){const{tag,ring,start,end,angle}=mark,[inner,outer]=rings[ring];positions.set(tag.id,{...mark,inner,outer});const active=tag.id===state.focusTagId;const group=svgNode('g',{class:'graph-group',role:'button',tabindex:'0','aria-label':tagPath(tag).map(t=>t.name).join(' / '),'aria-pressed':active,'data-tag-id':tag.id,'data-ring':ring,'data-focus-key':'graph-tag-'+tag.id});
-    const d=arcPath(cx,cy,inner,outer,start,end);group.append(svgNode('path',{d,class:'graph-hit'}));group.append(svgNode('path',{d,class:`graph-arc ${active?'active':''} ${state.filters.has(tag.id)?'filter':''}`,'data-inner-radius':inner,'data-outer-radius':outer}));
+  const stage=el('div',{class:'graph-stage'}),svg=svgNode('svg',{class:'solar-graph',viewBox:`0 0 ${w} ${h}`,role:'group','aria-label':'文章与分类聚合图'}),marks=graphTags(),positions=new Map(),model=articleProjection(),selected=model.byId.get(state.selectedArticleId),coding=model.contexts.get(state.selectedArticleId)||new Set();
+  for(const mark of marks){const{tag,ring,start,end,angle}=mark,[inner,outer]=rings[ring];positions.set(tag.id,{...mark,inner,outer});const active=tag.id===state.focusTagId;const group=svgNode('g',{class:'graph-group',role:'button',tabindex:'0','aria-label':tagPath(tag).map(t=>t.name).join(' / ')+`，${model.members.get(tag.id)?.size||0} 篇`,'aria-pressed':active,'data-member-count':model.members.get(tag.id)?.size||0,'data-member-ids':JSON.stringify([...(model.members.get(tag.id)||[])].sort()),'data-coding-selected':coding.has(tag.id),'data-tag-id':tag.id,'data-ring':ring,'data-focus-key':'graph-tag-'+tag.id});
+    const d=arcPath(cx,cy,inner,outer,start,end);group.append(svgNode('path',{d,class:'graph-hit'}));group.append(svgNode('path',{d,class:`graph-arc ${active?'active':''} ${state.filters.has(tag.id)?'filter':''} ${coding.has(tag.id)?(selected?.tag_ids.includes(tag.id)?'coded-direct':'coded-parent'):''}`,'data-inner-radius':inner,'data-outer-radius':outer}));
     if(!compact){const radius=(inner+outer)/2,[x,y]=point(cx,cy,radius,angle),lines=labelLines(tag.name,4),text=svgNode('text',{class:`graph-label ${tag.depth===1?'level-one':'level-two'}`,x,y:y-(lines.length-1)*8});lines.forEach((line,i)=>text.append(svgNode('tspan',{x,dy:i?16:0},line)));group.append(text);}
-    group.addEventListener('click',()=>focusTag(tag.id));group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();focusTag(tag.id);}else if(['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();const index=marks.findIndex(m=>m.tag.id===tag.id),next=marks[(index+(['ArrowLeft','ArrowUp'].includes(e.key)?marks.length-1:1))%marks.length].tag.id;focusTag(next);document.querySelector(`[data-tag-id="${next}"]`)?.focus({preventScroll:true});}});svg.append(group);
+    group.append(svgNode('title',{},tagPath(tag).map(t=>t.name).join(' / ')+`：${model.members.get(tag.id)?.size||0} 篇文章`));group.addEventListener('click',()=>focusTag(tag.id));group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();focusTag(tag.id);}else if(['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();const index=marks.findIndex(m=>m.tag.id===tag.id),next=marks[(index+(['ArrowLeft','ArrowUp'].includes(e.key)?marks.length-1:1))%marks.length].tag.id;focusTag(next);document.querySelector(`[data-tag-id="${next}"]`)?.focus({preventScroll:true});}});svg.append(group);
   }
-  const topicRadius=compact?156:312;
-  const topicPoints=themes.map(theme=>{const index=state.themes.findIndex(t=>t.theme.id===theme.theme.id),angle=-135+index*(state.themes.length<=2?180:360/state.themes.length);return{theme,angle,left:Math.cos(angle*Math.PI/180)<0};});
-  // Theme edges always terminate on an adopted depth-two tag, never an ancestor.
-  for(const{theme,angle,left}of topicPoints){const[x,y]=point(cx,cy,topicRadius,angle);const assignments=selectedTags(theme).filter(t=>positions.get(t.tag_id)?.tag.depth===2);const target=assignments.find(t=>t.tag_id===state.focusTagId)||assignments.find(t=>tagContains(state.focusTagId,t.tag_id));if(target){const mark=positions.get(target.tag_id),[sx,sy]=point(cx,cy,mark.outer,mark.angle);const curve=svgNode('path',{class:'theme-edge',d:`M${sx},${sy} Q${x+(compact?12:40)},${sy} ${x},${y}`,'data-theme-id':theme.theme.id,'data-target-tag-id':target.tag_id});svg.prepend(curve);}}
-  for(const{theme,angle,left}of topicPoints){const[x,y]=point(cx,cy,topicRadius,angle),titleY=compact?(state.themes.length<=2?(left?cy-143:cy+149):Math.max(16,Math.min(h-8,y+(y<cy?-18:30)))):(left?y-34:y+26),active=selectedTags(theme).some(t=>tagContains(state.focusTagId,t.tag_id));const group=svgNode('g',{class:`graph-theme ${active?'active':''}`,role:'button',tabindex:'0','aria-label':theme.theme.title,'data-theme-id':theme.theme.id,'data-focus-key':'graph-theme-'+theme.theme.id});group.append(svgNode('rect',{class:'theme-hit',x:compact?(left?0:w-148):(left?Math.max(0,x-180):Math.min(w-180,x-6)),y:compact?(state.themes.length<=2?(left?cy-162:cy+104):Math.min(y-8,titleY-16)):(left?y-54:y-8),width:compact?148:(left?190:180),height:compact?(state.themes.length<=2?64:Math.max(y+8,titleY+4)-Math.min(y-8,titleY-16)):(left?64:70)}));group.append(svgNode('circle',{cx:x,cy:y,r:active?5:4}));const short=theme.theme.title.replace(/[？?]$/,'').replace(/，.*$/,'').replace('如何改变','与').replace('与判断','判断');const label=svgNode('text',{class:'graph-topic-label',x:compact?(left?0:w):(left?Math.max(166,x-10):Math.min(w-166,x+6)),y:titleY,style:'text-anchor:'+(compact?(left?'start':'end'):(left?'end':'start'))});const lines=compact?[short]:themeLines(theme.theme.title);lines.forEach((line,i)=>label.append(svgNode('tspan',{x:label.getAttribute('x'),dy:i?20:0},line)));group.append(label);group.addEventListener('click',()=>navigate('detail',theme.theme.id));group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();navigate('detail',theme.theme.id);}});svg.append(group);}
-  if(compact){svg.append(svgNode('text',{class:'graph-count',x:cx,y:cy-3},themes.length));svg.append(svgNode('text',{class:'graph-count-label',x:cx,y:cy+19},'主题'));}
-  else svg.append(svgNode('text',{class:'graph-count-label',x:cx,y:cy+4},`${themes.length} 个主题`));
-  if(!themes.length)stage.append(el('p',{class:'graph-empty',role:'status'},state.themes.length?'没有匹配的主题':'还没有已保存的主题'));
+  const matching=new Set(filtered.map(a=>a.id)),focusMembers=state.focusTagId?(model.members.get(state.focusTagId)||new Set()):new Set(model.byId.keys()),hasFilter=!!(state.query||state.filters.size),n=model.records.length;
+  const minR=compact?151:294,maxR=Math.max(minR,Math.min(compact?166:340,w/2-12,h/2-12)),baseR=(minR+maxR)/2;
+  const dense=n>80,tracks=dense?Math.max(1,Math.ceil(n/Math.max(1,Math.floor(2*Math.PI*baseR/4)))):1;
+  const navigation=model.records.filter(a=>matching.has(a.id));
+  model.records.forEach((article,i)=>{
+    const track=i%tracks,rank=Math.floor(i/tracks),count=Math.floor((n-1-track)/tracks)+1,radius=tracks===1?baseR:minR+track/(tracks-1)*(maxR-minR),angle=-90+(rank+(track%2)*.5)/count*360;
+    const[x,y]=point(cx,cy,radius,angle),chosen=article.id===state.selectedArticleId,inFocus=focusMembers.has(article.id),match=matching.has(article.id);
+    const node=svgNode('circle',{class:`graph-article ${inFocus?'in-focus':''} ${chosen?'selected':''} ${hasFilter&&!match?'filtered-out':''}`,cx:x,cy:y,r:chosen?7:(dense?1.35:5),role:'button',tabindex:(chosen||(!state.selectedArticleId&&article.id===navigation[0]?.id))?'0':'-1','aria-label':article.title,'aria-pressed':chosen,'data-article-id':article.id,'data-in-focus':inFocus,'data-matches':match,'data-selected':chosen,'data-focus-key':'node-article-'+article.id});
+    node.append(svgNode('title',{},article.title));node.addEventListener('click',()=>selectArticle(article.id));node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectArticle(article.id);}else if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();const index=navigation.findIndex(a=>a.id===article.id),next=navigation[(index+(['ArrowLeft','ArrowUp'].includes(e.key)?navigation.length-1:1))%navigation.length];if(next){selectArticle(next.id);document.querySelector(`.graph-article[data-article-id="${next.id}"]`)?.focus({preventScroll:true});}}});svg.append(node);
+  });
+  const total=state.articleIndex?.available?model.records.length:'—';
+  svg.append(svgNode('text',{class:'graph-count',x:cx,y:cy-3,'data-global-total':total,style:'font-size:'+(compact&&n>999?'18px':'22px')},total));svg.append(svgNode('text',{class:'graph-count-label',x:cx,y:cy+19},'全部文章'));
+  stage.append(el('div',{class:'graph-scope-summary'},el('span',{'data-global-count':state.articleIndex?.available?n:''},state.articleIndex?.available?`全部 ${n} 篇`:'文章暂不可用'),el('span',{'data-focus-count':filtered.filter(a=>focusMembers.has(a.id)).length},state.focusTagId?`聚焦 ${filtered.filter(a=>focusMembers.has(a.id)).length} 篇`:`当前 ${filtered.length} 篇`)));
+  if(hasFilter&&!filtered.length)stage.append(el('p',{class:'graph-empty',role:'status'},'没有匹配的文章'));
   stage.append(svg);
   const focus=positions.get(state.focusTagId);
-  if(compact&&focus){const[x,y]=point(cx,cy,focus.outer,focus.angle),right=x>=cx,labelWidth=Math.min(156,Array.from(focus.tag.name).length*12+16),lx=Math.min(w-labelWidth-2,Math.max(2,right?x+34:x-labelWidth-34)),ly=Math.min(h-30,Math.max(22,y-13));svg.append(svgNode('line',{class:'focus-leader',x1:x,y1:y,x2:right?lx-4:lx+labelWidth+4,y2:ly+13}));svg.append(svgNode('circle',{class:'focus-point',cx:x,cy:y,r:2.5}));stage.append(button(focus.tag.name,()=>openTags('focus'),'focus-callout',{'data-focus-key':'focus-callout','data-tag-id':focus.tag.id,'aria-label':'切换焦点标签：'+tagPath(focus.tag).map(t=>t.name).join(' / '),style:{left:lx+'px',top:ly+'px',width:labelWidth+'px'},'aria-haspopup':'dialog'}));}
+  if(compact&&focus){const[x,y]=point(cx,cy,focus.outer,focus.angle),right=x>=cx,labelWidth=Math.min(156,Array.from(focus.tag.name).length*12+44),lx=Math.min(w-labelWidth-2,Math.max(2,right?x+34:x-labelWidth-34)),ly=Math.min(h-30,Math.max(22,y-13));svg.append(svgNode('line',{class:'focus-leader',x1:x,y1:y,x2:right?lx-4:lx+labelWidth+4,y2:ly+13}));svg.append(svgNode('circle',{class:'focus-point',cx:x,cy:y,r:2.5}));stage.append(button(focus.tag.name+' · '+(model.members.get(focus.tag.id)?.size||0),()=>openTags('focus'),'focus-callout',{'data-focus-key':'focus-callout','data-tag-id':focus.tag.id,'aria-label':'切换焦点标签：'+tagPath(focus.tag).map(t=>t.name).join(' / '),style:{left:lx+'px',top:ly+'px',width:labelWidth+'px'},'aria-haspopup':'dialog'}));}
   if(compact&&!focus){const tag=tagsById().get(state.focusTagId);if(tag)stage.append(button(tag.name,()=>openTags('focus'),'focus-callout',{'data-focus-key':'focus-callout','data-tag-id':tag.id,'aria-label':'切换焦点标签：'+tagPath(tag).map(t=>t.name).join(' / '),style:{left:Math.max(2,w-158)+'px',top:'0px',width:'156px'},'aria-haspopup':'dialog'}));}
   return stage;
 }
 let graphFrame=0;
-function scheduleGraph(){cancelAnimationFrame(graphFrame);graphFrame=requestAnimationFrame(()=>{const wrap=document.querySelector('.graph-wrap');if(!wrap)return;const{width,height}=wrap.getBoundingClientRect();if(width&&height)preserveFocus(()=>wrap.replaceChildren(renderGraph(state.themes.filter(matches),width,height)));});}
+function scheduleGraph(){cancelAnimationFrame(graphFrame);graphFrame=requestAnimationFrame(()=>{const wrap=document.querySelector('.graph-wrap');if(!wrap)return;const{width,height}=wrap.getBoundingClientRect();if(width&&height)preserveFocus(()=>wrap.replaceChildren(renderGraph(articleProjection().records.filter(matchesArticle),width,height)));});}
 
 function renderDetail() {
   const page=el('section',{class:'page detail-page'}); const view=currentTheme();
