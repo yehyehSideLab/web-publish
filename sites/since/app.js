@@ -228,8 +228,8 @@ function graphTags(){
   return marks;
 }
 function renderGraph(filtered,width,height){
-  const compact=innerWidth<=1100,w=width||(compact?innerWidth-32:innerWidth-568),h=(height||(compact?350:innerHeight-131))-44,cx=w/2,cy=h/2;
-  const rings=compact?{'domain-1':[24,36],'domain-2':[44,64],'lens-1':[88,100],'lens-2':[108,128]}:{'domain-1':[114,132],'domain-2':[140,172],'lens-1':[196,214],'lens-2':[222,254]};
+  const compact=innerWidth<=1100,w=width||(compact?innerWidth-32:innerWidth-568),h=height||(compact?350:innerHeight-131),cx=w/2,cy=h/2;
+  const rings=compact?{'domain-1':[24,36],'domain-2':[44,64],'lens-1':[96,108],'lens-2':[116,136]}:{'domain-1':[114,132],'domain-2':[140,172],'lens-1':[208,226],'lens-2':[234,266]};
   const stage=el('div',{class:'graph-stage'}),svg=svgNode('svg',{class:'solar-graph',viewBox:`0 0 ${w} ${h}`,role:'group','aria-label':'文章与分类聚合图'}),marks=graphTags(),positions=new Map(),model=articleProjection(),selected=model.byId.get(state.selectedArticleId),coding=model.contexts.get(state.selectedArticleId)||new Set();
   const matching=new Set(filtered.map(a=>a.id)),focusMembers=state.focusTagId?(model.members.get(state.focusTagId)||new Set()):new Set(model.byId.keys()),hasFilter=!!(state.query||state.filters.size),n=model.records.length;
   const represented=new Set(marks.filter(m=>m.tag.depth===2).flatMap(m=>[...(model.members.get(m.tag.id)||[])]));
@@ -257,7 +257,18 @@ function renderGraph(filtered,width,height){
   const focus=positions.get(state.focusTagId);
   if(compact&&focus){const[x,y]=point(cx,cy,focus.outer,focus.angle),right=x>=cx,labelWidth=Math.min(156,Array.from(focus.tag.name).length*12+44),lx=Math.min(w-labelWidth-2,Math.max(2,right?x+34:x-labelWidth-34)),ly=Math.min(h-30,Math.max(22,y-13));svg.append(svgNode('line',{class:'focus-leader',x1:x,y1:y,x2:right?lx-4:lx+labelWidth+4,y2:ly+13}));svg.append(svgNode('circle',{class:'focus-point',cx:x,cy:y,r:2.5}));stage.append(button(focus.tag.name+' · '+(model.members.get(focus.tag.id)?.size||0),()=>openTags('focus'),'focus-callout',{'data-focus-key':'focus-callout','data-tag-id':focus.tag.id,'aria-label':'切换焦点标签：'+tagPath(focus.tag).map(t=>t.name).join(' / '),style:{left:lx+'px',top:ly+'px',width:labelWidth+'px'},'aria-haspopup':'dialog'}));}
   if(compact&&!focus){const tag=tagsById().get(state.focusTagId);if(tag)stage.append(button(tag.name,()=>openTags('focus'),'focus-callout',{'data-focus-key':'focus-callout','data-tag-id':tag.id,'aria-label':'切换焦点标签：'+tagPath(tag).map(t=>t.name).join(' / '),style:{left:Math.max(2,w-158)+'px',top:'0px',width:'156px'},'aria-haspopup':'dialog'}));}
-  return el('div',{class:'graph-composition'},stage,el('nav',{class:'overview-themes','aria-label':'主题脉络'},state.themes.map(t=>button([el('span',{class:'theme-entry-label'},'脉络'),el('span',{class:'theme-entry-title'},t.theme.title)],()=>navigate('detail',t.theme.id),'overview-theme-entry',{'data-theme-id':t.theme.id,'aria-label':'主题脉络：'+t.theme.title}))));
+  const themeRadius=compact?158:320;
+  state.themes.forEach((summary,index)=>{
+    const angle=-135+index*(state.themes.length<=2?180:360/state.themes.length),left=Math.cos(angle*Math.PI/180)<0,[x,y]=point(cx,cy,themeRadius,angle),[sx,sy]=point(cx,cy,themeRadius-10,angle);
+    const labelX=compact?(left?4:w-174):(left?Math.max(4,x-180):Math.min(w-180,x+10));
+    const labelY=compact?(state.themes.length<=2?(left?0:h-40):Math.max(0,Math.min(h-40,y+(y<cy?-44:14)))):(left?y-48:y+14);
+    const entry=svgNode('g',{class:'outer-theme-entry',role:'button',tabindex:'0','data-theme-id':summary.theme.id,'data-theme-radius':themeRadius,'data-theme-angle':angle,'data-center-x':x,'data-center-y':y,'data-lens-outer':rings['lens-2'][1],'aria-label':'主题脉络：'+summary.theme.title,'data-focus-key':'outer-theme-'+summary.theme.id});
+    entry.append(svgNode('rect',{class:'outer-theme-hit',x:Math.min(labelX,x-7),y:Math.min(labelY,y-7),width:Math.max(labelX+172,x+7)-Math.min(labelX,x-7),height:Math.max(labelY+38,y+7)-Math.min(labelY,y-7)}));
+    entry.append(svgNode('line',{class:'outer-theme-leader',x1:sx,y1:sy,x2:x,y2:y}));entry.append(svgNode('circle',{class:'outer-theme-dot',cx:x,cy:y,r:4}));
+    const title=svgNode('text',{class:'outer-theme-title',x:labelX,y:labelY+13});themeLines(summary.theme.title).forEach((line,i)=>title.append(svgNode('tspan',{x:labelX,dy:i?18:0},(i?'':'脉络 · ')+line)));entry.append(title);entry.append(svgNode('title',{},summary.theme.title));
+    entry.addEventListener('click',()=>navigate('detail',summary.theme.id));entry.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();navigate('detail',summary.theme.id);}});svg.append(entry);
+  });
+  return el('div',{class:'graph-composition'},stage);
 }
 let graphFrame=0;
 function scheduleGraph(){cancelAnimationFrame(graphFrame);graphFrame=requestAnimationFrame(()=>{const wrap=document.querySelector('.graph-wrap');if(!wrap)return;const{width,height}=wrap.getBoundingClientRect();if(width&&height)preserveFocus(()=>wrap.replaceChildren(renderGraph(articleProjection().records.filter(matchesArticle),width,height)));});}
